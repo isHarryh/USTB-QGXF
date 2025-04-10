@@ -7,14 +7,11 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.9,<4"
+requires-python = ">=3.9,<3.13"
 dependencies = [
      "Pillow (~=9.5)",
      "pycryptodome (~=3.22)",
      "requests (~=2.32)"
-]
-dev-dependencies = [
-    "pyinstaller (==6.12.0)"
 ]
 
 [tool.poetry]
@@ -24,6 +21,10 @@ package-mode = false
 name = "PyPI-Tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 priority = "primary"
+
+[tool.poetry.group.dev.dependencies]
+toml = "0.10.2"
+pyinstaller = "6.12.0"
 
 [tool.build]
 build-dir = "$project$\\build"
