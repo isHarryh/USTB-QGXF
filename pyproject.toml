@@ -1,20 +1,24 @@
-[tool.poetry]
+[project]
 name = "AutoGfjyUstb"
 version = "1.0.0"
 description = "Auto complete USTB GFJY lessons"
-authors = ["Harry Huang <harryhuang2652@qq.com>"]
+authors = [
+    {name = "Harry Huang", email = "harryhuang2652@qq.com"}
+]
 license = "MIT"
 readme = "README.md"
+requires-python = ">=3.9,<4"
+dependencies = [
+     "Pillow (~=9.5)",
+     "pycryptodome (~=3.22)",
+     "requests (~=2.32)"
+]
+dev-dependencies = [
+    "pyinstaller (==6.12.0)"
+]
+
+[tool.poetry]
 package-mode = false
-
-[tool.poetry.dependencies]
-python = "3.8.10"
-Pillow = "~8.4"
-pycryptodome = "~3.20"
-requests = "~2.32"
-
-[tool.poetry.dev-dependencies]
-pyinstaller = "6.8.0"
 
 [[tool.poetry.source]]
 name = "PyPI-Tsinghua"
@@ -27,5 +31,5 @@ entry = "$project$\\Main.py"
 log-level = "WARN"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
