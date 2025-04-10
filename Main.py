@@ -6,12 +6,30 @@ import requests
 import random
 import threading
 import time
+from enum import Enum
+
 from src.Cipher import rsa_encrypt, get_image_from_base64
 from src.GlobalMethods import print, input
 
 USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/126.0.0.0"
 
-class GfjyAPI:
+class QiangGuoXianFengBaseURL(Enum):
+    USTB_GFJY = "https://gfjy.ustb.edu.cn"
+    USTB_DXPX = "https://dxpx.ustb.edu.cn"
+
+    @classmethod
+    def all_names(cls):
+        return cls._member_names_
+
+    @classmethod
+    def contains_name(cls, name):
+        return any(member_name == name.upper() for member_name in cls._member_names_)
+
+    @classmethod
+    def of_name(cls, name):
+        return cls._member_map_[name.upper()]
+
+class QiangGuoXianFengAPI:
     class BadAuthorizationError(Exception):
         def __init__(self, *args):
             super().__init__(args)
@@ -24,8 +42,9 @@ class GfjyAPI:
         def __init__(self, *args):
             super().__init__(args)
 
-    def __init__(self, timeout=3):
+    def __init__(self, base_url, timeout=3):
         self._headers = {'User-Agent': USER_AGENT}
+        self._base_url = base_url
         self._timeout = timeout
 
     def _send(self, url, data=None, max_retries=1, as_json=False, use_get=False):
@@ -43,11 +62,11 @@ class GfjyAPI:
                 if d['code'] == 99999:
                     return d
                 elif d['code'] == 10002:
-                    raise GfjyAPI.BadAuthorizationError(d.get('msg', "Authorization failed"))
+                    raise QiangGuoXianFengAPI.BadAuthorizationError(d.get('msg', "Authorization failed"))
                 elif d['code'] == 10003:
-                    raise GfjyAPI.UnauthorizedError(d.get('msg', "Permission denied"))
+                    raise QiangGuoXianFengAPI.UnauthorizedError(d.get('msg', "Permission denied"))
                 elif d['code'] == 20000:
-                    raise GfjyAPI.FatalAPIError(f"API failed with code {d['code']}")
+                    raise QiangGuoXianFengAPI.FatalAPIError(f"API failed with code {d['code']}")
                 else:
                     raise IOError(f"API failed with code {d['code']}")
             except IOError as arg:
@@ -55,69 +74,69 @@ class GfjyAPI:
         raise RuntimeError("Max retires exceeded")
 
     def get_captcha(self):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/user/getCaptcha",
+        d = self._send(f"{self._base_url}/trainingApi/v1/user/getCaptcha",
                        max_retries=3,
                        use_get=True)
         return d['data']
 
     def login(self, user_id, user_pwd, captcha_id, captcha_code):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/user/login",
+        d = self._send(f"{self._base_url}/trainingApi/v1/user/login",
                        data={'userSid': user_id, 'password': rsa_encrypt(user_pwd),
                              'id': captcha_id, 'code': captcha_code})
         self._headers['Token'] = d['data']['token']
         return d['data']
 
     def get_lesson_list(self):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/lesson/myLesson",
+        d = self._send(f"{self._base_url}/trainingApi/v1/lesson/myLesson",
                        data={'pageNum': 1, 'pageSize': 20})
         return d['data']['list']
 
     def get_video_list(self, lesson_id):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/lesson/lessonVideos",
+        d = self._send(f"{self._base_url}/trainingApi/v1/lesson/lessonVideos",
                        data={'lessonId': lesson_id, 'showType': 0, 'pageNum': 1, 'pageSize': 20},
                        as_json=True)
         return d['data']['list']
 
     def get_resource_list(self, video_id):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/lesson/lessonVideoDetail",
+        d = self._send(f"{self._base_url}/trainingApi/v1/lesson/lessonVideoDetail",
                        data={'videoId': video_id})
         return d['data']['resourceList']
 
     def get_resource_detail(self, resource_id):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/lesson/lessonVideoResourceDetail",
+        d = self._send(f"{self._base_url}/trainingApi/v1/lesson/lessonVideoResourceDetail",
                        data={'resourceId': resource_id})
         return d['data']
 
     def set_resource_progress(self, resource_id, hhmmss):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/lesson/setResourceTime",
+        d = self._send(f"{self._base_url}/trainingApi/v1/lesson/setResourceTime",
                        max_retries=10,
                        data={'resourceId': resource_id, 'videoTime': hhmmss})
         return None
 
     def get_lesson_exam_list(self):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/exam/examLessonList")
+        d = self._send(f"{self._base_url}/trainingApi/v1/exam/examLessonList")
         return d['data']
 
     def get_lesson_exam_start(self, lesson_id, stage_id):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/exam/startLessonExam",
+        d = self._send(f"{self._base_url}/trainingApi/v1/exam/startLessonExam",
                        max_retries=3,
                        data={'stageId': stage_id, 'lessonId': lesson_id})
         return d['data']
 
     def set_exam_temp_answer(self, record_id, answer_dict):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/exam/saveExamAnswer",
+        d = self._send(f"{self._base_url}/trainingApi/v1/exam/saveExamAnswer",
                        data={'recordId': record_id, 'answerList': answer_dict},
                        as_json=True)
         return None
 
     def set_exam_final_answer(self, record_id, answer_dict):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/exam/submitExam",
+        d = self._send(f"{self._base_url}/trainingApi/v1/exam/submitExam",
                        data={'recordId': record_id, 'answerList': answer_dict},
                        as_json=True)
         return d['data']
 
     def get_exam_report(self, record_id, right_type=-1):
-        d = self._send("https://gfjy.ustb.edu.cn/trainingApi/v1/exam/examRecordDetail",
+        d = self._send(f"{self._base_url}/trainingApi/v1/exam/examRecordDetail",
                        data={'recordId': record_id, 'rightType': right_type})
         return d['data']
 
@@ -125,7 +144,7 @@ class AutoTrainer:
     PLAYING_TIME_SCALE = 0.95
     FINISHING_REPORT_TIMES = 2
 
-    def __init__(self, api:GfjyAPI, max_jobs=10, report_interval=10):
+    def __init__(self, api:QiangGuoXianFengAPI, max_jobs=10, report_interval=10):
         self.api = api
         self._threads = []
         self._right_answers = {}
@@ -167,9 +186,9 @@ class AutoTrainer:
                 captcha_code = input("    请输入验证码: ", c=7)
                 info = self.api.login(user_id, user_pwd, captcha['captchaId'], captcha_code)
                 break
-            except GfjyAPI.BadAuthorizationError as arg:
+            except QiangGuoXianFengAPI.BadAuthorizationError as arg:
                 print(f"  登录失败，填写有误: {arg}", c=3)
-            except GfjyAPI.FatalAPIError as arg:
+            except QiangGuoXianFengAPI.FatalAPIError as arg:
                 print(f"  登录失败，意外错误：{arg}", c=3)
         print(f"  登录成功，欢迎`{info['userName']}`!", c=2)
 
@@ -290,9 +309,19 @@ class AutoTrainer:
 if __name__ == '__main__':
     try:
         print("开始运行!", c=2)
-        print("  USTB 国防教育官网: https://gfjy.ustb.edu.cn", c=7)
-        auto = AutoTrainer(GfjyAPI())
+
+        while True:
+            print("请选择目标平台", c=3)
+            for site in QiangGuoXianFengBaseURL.all_names():
+                print(f"  - 平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}", c=7)
+            site_code = input("  请输入完整的平台代码: ", c=7)
+            if QiangGuoXianFengBaseURL.contains_name(site_code):
+                break
+
+        base_url = QiangGuoXianFengBaseURL.of_name(site_code).value
+        auto = AutoTrainer(QiangGuoXianFengAPI(base_url))
         auto.manual_login()
+
         while True:
             print("请选择任务类型", c=3)
             print("  1=视频课程, 2=课程考试, 3=全选", c=7)
