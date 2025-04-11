@@ -319,8 +319,6 @@ if __name__ == '__main__':
                 break
 
         base_url = QiangGuoXianFengBaseURL.of_name(site_code).value
-        auto = AutoTrainer(QiangGuoXianFengAPI(base_url))
-        auto.manual_login()
 
         while True:
             print("请选择任务类型", c=3)
@@ -328,6 +326,19 @@ if __name__ == '__main__':
             task_code = input("  请输入序号: ", c=7)
             if task_code in ["1", "2", "3"]:
                 break
+
+        DEFAULT_MAX_CONCURRENT = 5
+        try:
+            print("请设置任务参数", c=3)
+            max_concurrent = int(input(f"  同时观看课程数: ", c=7))
+            assert 1 <= max_concurrent <= 20
+        except:
+            max_concurrent = DEFAULT_MAX_CONCURRENT
+            print(f"  已设为默认值 {DEFAULT_MAX_CONCURRENT}", c=7)
+
+        auto = AutoTrainer(QiangGuoXianFengAPI(base_url), max_jobs=max_concurrent)
+        auto.manual_login()
+
         if task_code in ["1", "3"]:
             auto.watch_all()
         if task_code in ["2", "3"]:
