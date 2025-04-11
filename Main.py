@@ -6,28 +6,12 @@ import requests
 import random
 import threading
 import time
-from enum import Enum
 
 from src.Cipher import rsa_encrypt, get_image_from_base64
+from src.Enums import QiangGuoXianFengBaseURL
 from src.GlobalMethods import print, input
 
 USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/126.0.0.0"
-
-class QiangGuoXianFengBaseURL(Enum):
-    USTB_GFJY = "https://gfjy.ustb.edu.cn"
-    USTB_DXPX = "https://dxpx.ustb.edu.cn"
-
-    @classmethod
-    def all_names(cls):
-        return cls._member_names_
-
-    @classmethod
-    def contains_name(cls, name):
-        return any(member_name == name.upper() for member_name in cls._member_names_)
-
-    @classmethod
-    def of_name(cls, name):
-        return cls._member_map_[name.upper()]
 
 class QiangGuoXianFengAPI:
     class BadAuthorizationError(Exception):
