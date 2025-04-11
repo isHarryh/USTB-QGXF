@@ -203,7 +203,8 @@ class AutoTrainer:
         total_time = detail['resourceDuration']
         thread = threading.Thread(target=self._watch,
                                   name=f"AutoTrain#{resource_id}",
-                                  args=(resource_id, start_time, total_time))
+                                  args=(resource_id, start_time, total_time),
+                                  daemon=True)
         thread.start()
         self._threads.append(thread)
 
@@ -330,6 +331,10 @@ if __name__ == '__main__':
         while not auto.is_subthread_completed():
             time.sleep(0.1)
         print("恭喜，所选的任务已完成!", c=2)
+        input()
+    except KeyboardInterrupt as arg:
+        print("用户手动终止", c=1)
+        print(type(arg).__name__, c=3)
         input()
     except BaseException as arg:
         print("发生了意外错误导致程序终止", c=1)
