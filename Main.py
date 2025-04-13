@@ -128,17 +128,20 @@ class QiangGuoXianFengAPI:
 class AutoTrainer:
     PLAYING_TIME_SCALE = 0.95
     FINISHING_REPORT_TIMES = 2
+    START_PLAYING_INTERVAL = 3
 
-    def __init__(self, api:QiangGuoXianFengAPI, max_jobs=10, report_interval=10):
+    def __init__(self, api:QiangGuoXianFengAPI, max_jobs=10, report_interval=10, report_randomness=1):
         self.api = api
         self._threads = []
         self._right_answers = {}
         self._max_jobs = max_jobs
         self._now_jobs = 0
-        self._report_interval = report_interval
+        self._report_interval = abs(report_interval)
+        self._report_randomness = abs(report_randomness)
 
     @staticmethod
     def _second_to_hhmmss(second:int):
+        second = round(second)
         h = second // 3600
         m = second % 3600 // 60
         s = second % 60
@@ -149,7 +152,7 @@ class AutoTrainer:
         if not hhmmss:
             return 0
         units = (3600, 60, 1)
-        return sum([x * y for x, y in zip(units, map(int, hhmmss.split(':')))])
+        return sum([round(x * y) for x, y in zip(units, map(int, hhmmss.split(':')))])
 
     def is_subthread_completed(self):
         for i in self._threads:
@@ -182,11 +185,12 @@ class AutoTrainer:
             start = AutoTrainer._hhmmss_to_second(start_time)
             total = AutoTrainer._hhmmss_to_second(total_time)
             for now in range(start, total, self._report_interval):
+                now += (random.random() - 0.5) * 2 * self._report_randomness
                 now_time = AutoTrainer._second_to_hhmmss(now)
                 print(f"  (视频资源 {resource_id}) 正在观看 {now_time} / {total_time} ({now / total:.0%})", c=7)
                 self.api.set_resource_progress(resource_id, AutoTrainer._second_to_hhmmss(now))
                 time.sleep(self._report_interval * AutoTrainer.PLAYING_TIME_SCALE)
-            print(f"  (视频资源 {resource_id}) 正在观看 {total_time} / {total_time} (100%)", c=7)
+            print(f"  (视频资源 {resource_id}) 正在结束观看", c=7)
             for _ in range(AutoTrainer.FINISHING_REPORT_TIMES):
                 self.api.set_resource_progress(resource_id, total_time)
                 time.sleep(self._report_interval * AutoTrainer.PLAYING_TIME_SCALE)
@@ -219,9 +223,8 @@ class AutoTrainer:
                 if not v['complete']:
                     resources = self.api.get_resource_list(v['videoId'])
                     for r in resources:
-                        print(f"  (视频资源 {r['resourceId']}) 总时长 {r['resourceDuration']}", c=7)
                         self.watch(r)
-                        time.sleep(3)
+                        time.sleep(AutoTrainer.START_PLAYING_INTERVAL)
 
     @staticmethod
     def _find_by_property(collection, property_name, property_value):
