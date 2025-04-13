@@ -26,8 +26,3 @@ def rsa_encrypt(data:str):
     encrypted = _CIPHER.encrypt(data.encode(_ENCODING))
     string = base64.b64encode(encrypted).decode(_ENCODING)
     return urllib.parse.quote(string)
-
-def get_image_from_base64(decoded:str):
-    if search := re.match(r"data:image/(?P<ext>.*?);base64,(?P<data>.*)", decoded, re.DOTALL):
-        decoded = base64.b64decode(search.groupdict()['data'])
-    return Image.open(BytesIO(decoded))

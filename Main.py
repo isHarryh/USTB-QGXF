@@ -7,7 +7,8 @@ import random
 import threading
 import time
 
-from src.Cipher import rsa_encrypt, get_image_from_base64
+from src.Captcha import QiangGuoXianFengCaptcha
+from src.Cipher import rsa_encrypt
 from src.Enums import QiangGuoXianFengBaseURL
 from src.GlobalMethods import print, input
 
@@ -165,9 +166,8 @@ class AutoTrainer:
                 print("  正在获取验证码", c=5)
                 captcha = self.api.get_captcha()
                 print("    请在弹出的窗口中查看验证码图片，然后关闭该窗口", c=6)
-                img = get_image_from_base64(captcha['base64Str']).convert('RGB')
-                img.show()
-                captcha_code = input("    请输入验证码: ", c=7)
+                captcha_obj = QiangGuoXianFengCaptcha(captcha['base64Str'])
+                captcha_code = captcha_obj.solve_challenge()
                 info = self.api.login(user_id, user_pwd, captcha['captchaId'], captcha_code)
                 break
             except QiangGuoXianFengAPI.BadAuthorizationError as arg:
