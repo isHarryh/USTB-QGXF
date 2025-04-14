@@ -15,9 +15,10 @@ from .GlobalMethods import input
 _T_IN = TypeVar("_T_IN")
 _T_OUT = TypeVar("_T_OUT")
 
+
 class ImageCaptcha(ABC, Generic[_T_IN, _T_OUT]):
     @abstractmethod
-    def __init__(self, data:_T_IN):
+    def __init__(self, data: _T_IN):
         raise NotImplementedError()
 
     @abstractmethod
@@ -28,10 +29,10 @@ class ImageCaptcha(ABC, Generic[_T_IN, _T_OUT]):
 class QiangGuoXianFengCaptcha(ImageCaptcha[str, str]):
     def __init__(self, data):
         if search := re.match(r"data:image/(?P<ext>.*?);base64,(?P<data>.*)", data, re.DOTALL):
-            decoded = base64.b64decode(search.groupdict()['data'])
+            decoded = base64.b64decode(search.groupdict()["data"])
         self.img: Image.Image = Image.open(BytesIO(decoded))
 
-    def _transform_image(self, img:Image.Image):
+    def _transform_image(self, img: Image.Image):
         img_rgb: Image.Image = img.convert("RGB")
         width, height = img_rgb.size
 

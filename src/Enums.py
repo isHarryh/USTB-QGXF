@@ -5,12 +5,13 @@ import os
 import getpass
 from enum import StrEnum
 
+
 class HttpUserAgent(StrEnum):
-    ANDROID_FIREFOX = "Mozilla/5.0 (Android 10; Mobile; rv:89.0) Gecko/89.0 Firefox/89.0"
+    ANDROID_FIREFOX = "Mozilla/5.0 (Android 10; Mobile; rv:89.0) Gecko/89.0 Firefox/89.0"  # fmt: skip
     ANDROID_LINUX = "Mozilla/5.0 (Linux; Android 9; ASUS_X00TD; Flow) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/359.0.0.288 Mobile Safari/537.36"
     ANDROID_WECHAT = "Mozilla/5.0 (Linux; Android 13; PFCM00 Build/TP1A.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.6723.103 Mobile Safari/537.36 XWEB/1300467 MMWEBSDK/20241202 MMWEBID/4691 MicroMessenger/8.0.56.2800(0x2800385E) WeChat/arm64 Weixin NetType/5G Language/zh_CN ABI/arm64"
     IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"
-    LINUX_FIREFOX = "Mozilla/5.0 (X11; Linux i686; rv:114.0) Gecko/20100101 Firefox/114.0"
+    LINUX_FIREFOX = "Mozilla/5.0 (X11; Linux i686; rv:114.0) Gecko/20100101 Firefox/114.0"  # fmt: skip
     MAC = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
     WINDOWS_CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.1052.53 Safari/537.36"
     WINDOWS_EDGE = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"

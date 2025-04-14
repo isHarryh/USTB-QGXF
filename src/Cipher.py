@@ -15,11 +15,13 @@ P02oRGZyqbzJLSQdQFTV6Qh1y/6MeYsPn3munaV0fE7PhhtwwJswiPy+bSSLVIll
 E0QeYMgiFCuwvC6m3h/Fm3ebGcDo7ei85y4SCcn1lJDFyS7ohTBEwG0Ny6ewNwG9
 FwIDAQAB
 -----END PUBLIC KEY-----"""
-_ENCODING = 'UTF-8'
+
+_ENCODING = "UTF-8"
 
 _CIPHER = PKCS1_v1_5.new(RSA.import_key(_PUBLIC_KEY))
 
-def rsa_encrypt(data:str):
+
+def rsa_encrypt(data: str):
     encrypted = _CIPHER.encrypt(data.encode(_ENCODING))
     string = base64.b64encode(encrypted).decode(_ENCODING)
     return urllib.parse.quote(string)

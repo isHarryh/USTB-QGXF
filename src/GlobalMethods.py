@@ -6,7 +6,8 @@ import threading
 
 _PRINT_LOCK = threading.Lock()
 
-def print(obj:object="", c:int=7):
+
+def print(obj: object = "", c: int = 7):
     """Prints with colored output.
 
     :param obj: The object to print;
@@ -16,7 +17,8 @@ def print(obj:object="", c:int=7):
     with _PRINT_LOCK:
         return builtins.print(f"\033[03{c}m{obj}")
 
-def input(obj:object="", c:int=7):
+
+def input(obj: object = "", c: int = 7):
     """Inputs with colored output.
 
     :param obj: The object to print;
