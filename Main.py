@@ -56,6 +56,22 @@ class QiangGuoXianFengAPI:
                 time.sleep(self._timeout)
         raise RuntimeError("Max retires exceeded")
 
+    def _fetch_pagination(self, url, data, page_size, max_page_num=1024, **kwargs):
+        rst = []
+        page_num = 1
+        while page_num <= max_page_num:
+            data['pageNum'] = page_num
+            data['pageSize'] = page_size
+            d = self._send(url, data, **kwargs)
+            li = d['data']['list']
+            if not isinstance(li, (list, tuple)):
+                break
+            rst.extend(li)
+            if len(li) < page_size:
+                break
+            page_num += 1
+        return rst
+
     def get_captcha(self):
         d = self._send(f"{self._base_url}/trainingApi/v1/user/getCaptcha",
                        max_retries=3,
@@ -70,15 +86,14 @@ class QiangGuoXianFengAPI:
         return d['data']
 
     def get_lesson_list(self):
-        d = self._send(f"{self._base_url}/trainingApi/v1/lesson/myLesson",
-                       data={'pageNum': 1, 'pageSize': 20})
-        return d['data']['list']
+        return self._fetch_pagination(f"{self._base_url}/trainingApi/v1/lesson/myLesson",{},
+                                      8)
 
     def get_video_list(self, lesson_id):
-        d = self._send(f"{self._base_url}/trainingApi/v1/lesson/lessonVideos",
-                       data={'lessonId': lesson_id, 'showType': 0, 'pageNum': 1, 'pageSize': 20},
-                       as_json=True)
-        return d['data']['list']
+        return self._fetch_pagination(f"{self._base_url}/trainingApi/v1/lesson/lessonVideos",
+                                      {'lessonId': lesson_id, 'showType': 0},
+                                      10,
+                                      as_json=True)
 
     def get_resource_list(self, video_id):
         d = self._send(f"{self._base_url}/trainingApi/v1/lesson/lessonVideoDetail",
