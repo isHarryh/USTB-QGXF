@@ -9,10 +9,8 @@ import time
 
 from src.Captcha import QiangGuoXianFengCaptcha
 from src.Cipher import rsa_encrypt
-from src.Enums import QiangGuoXianFengBaseURL
+from src.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
 from src.GlobalMethods import print, input
-
-USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/126.0.0.0"
 
 class QiangGuoXianFengAPI:
     class BadAuthorizationError(Exception):
@@ -28,7 +26,7 @@ class QiangGuoXianFengAPI:
             super().__init__(args)
 
     def __init__(self, base_url, timeout=3):
-        self._headers = {'User-Agent': USER_AGENT}
+        self._headers = {'User-Agent': HttpUserAgent.generate_user_agent().value}
         self._base_url = base_url
         self._timeout = timeout
 
