@@ -156,7 +156,7 @@ class AutoTrainer:
 
     def is_subthread_completed(self):
         for i in self._threads:
-            if i.isAlive():
+            if i.is_alive():
                 return False
         return True
 

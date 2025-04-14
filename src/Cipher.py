@@ -2,12 +2,9 @@
 # Copyright (c) 2024, Harry Huang
 # @ MIT License
 import base64
-import re
 import urllib.parse
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
-from io import BytesIO
-from PIL import Image
 
 _PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3R7TsLurEeey4H8b002x
