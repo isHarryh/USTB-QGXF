@@ -2,9 +2,8 @@
 # Copyright (c) 2024, Harry Huang
 # @ MIT License
 import sys
-from io import TextIOBase
 from threading import Condition, Thread
-from typing import Any, Callable, Iterable, List, Optional, overload, Union
+from typing import Any, Callable, Iterable, List, Optional, overload, TextIO, Union
 
 ContentSequence = Iterable[Union[str, tuple[str, int]]]
 
@@ -42,7 +41,7 @@ class ObservableLine:
     @overload
     def write(self, string: str, color: int, append: bool = False): ...
 
-    def write(self, *args, append: bool = False):
+    def write(self, *args, append: bool = False):  # type: ignore
         """Writes new content to this line."""
         if len(args) == 0:
             content = []
@@ -72,7 +71,7 @@ class ObservableLine:
 
 
 class TerminalUI:
-    def __init__(self, target: TextIOBase = sys.stdout):
+    def __init__(self, target: TextIO = sys.stdout):
         self.target = target
         self.lines: List[ObservableLine] = []
 
@@ -95,7 +94,7 @@ class TerminalUI:
     @overload
     def add_line(self, string: str, color: int) -> ObservableLine: ...
 
-    def add_line(self, *args) -> ObservableLine:
+    def add_line(self, *args) -> ObservableLine:  # type: ignore
         """Adds a new line to TUI, returns the line's instance for manipulation."""
         if len(args) == 0:
             content = []

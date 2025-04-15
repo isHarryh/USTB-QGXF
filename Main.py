@@ -186,7 +186,7 @@ class AutoTrainer:
         self._report_randomness = abs(report_randomness)
 
     @staticmethod
-    def _second_to_hhmmss(second: int):
+    def _second_to_hhmmss(second: float):
         second = round(second)
         h = second // 3600
         m = second % 3600 // 60
@@ -330,6 +330,7 @@ class AutoTrainer:
                 k, v = random.choice(tuple(has_right_answers.items()))
                 has_right_answers.pop(k)
                 q = AutoTrainer._find_by_property(question_list, "questionId", k)
+                assert q is not None, f"Cannot find the questionID {k}"
                 guess_answers[k] = random.choice([a["answerId"] for a in q["answerList"]])
             # Submit exam
             my_answers = {**guess_answers, **has_right_answers}
@@ -417,8 +418,8 @@ if __name__ == "__main__":
 
         STDOUT.add_line("请选择任务参数", 3)
         DEFAULT_MAX_CONCURRENT = 5
+        input_line = STDOUT.add_line("  同时观看课程数: ", 7)
         try:
-            input_line = STDOUT.add_line("  同时观看课程数: ", 7)
             max_concurrent = int(input())
             input_line.write(str(max_concurrent), 7, append=True)
             assert 1 <= max_concurrent <= 20

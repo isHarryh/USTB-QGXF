@@ -30,7 +30,9 @@ class QiangGuoXianFengCaptcha(ImageCaptcha[str, str]):
     def __init__(self, data):
         if search := re.match(r"data:image/(?P<ext>.*?);base64,(?P<data>.*)", data, re.DOTALL):
             decoded = base64.b64decode(search.groupdict()["data"])
-        self.img: Image.Image = Image.open(BytesIO(decoded))
+            self.img: Image.Image = Image.open(BytesIO(decoded))
+        else:
+            raise ValueError("Unrecognized image data")
 
     def _transform_image(self, img: Image.Image):
         img_rgb: Image.Image = img.convert("RGB")
@@ -38,6 +40,7 @@ class QiangGuoXianFengCaptcha(ImageCaptcha[str, str]):
 
         saturation_map = Image.new("L", (width, height))
         pixels = saturation_map.load()
+        assert pixels is not None
         for y in range(height):
             for x in range(width):
                 r, g, b = img_rgb.getpixel((x, y))
