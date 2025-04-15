@@ -3,4 +3,6 @@
 __pycache__/
 
 # Include
+!.vscode/
+!docs/
 !src/
