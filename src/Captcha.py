@@ -10,7 +10,7 @@ import re
 from io import BytesIO
 from PIL import Image
 
-from .GlobalMethods import input
+from .TerminalUI import STDOUT
 
 _T_IN = TypeVar("_T_IN")
 _T_OUT = TypeVar("_T_OUT")
@@ -48,4 +48,7 @@ class QiangGuoXianFengCaptcha(ImageCaptcha[str, str]):
     @override
     def solve_challenge(self):
         self._transform_image(self.img).show()
-        return input("    请输入验证码: ", c=7)
+        input_line = STDOUT.add_line("    请输入验证码: ", 7)
+        rst = input()
+        STDOUT.remove_line(input_line)
+        return rst

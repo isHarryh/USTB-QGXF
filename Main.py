@@ -10,7 +10,7 @@ import time
 from src.Captcha import QiangGuoXianFengCaptcha
 from src.Cipher import rsa_encrypt
 from src.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
-from src.GlobalMethods import print, input
+from src.TerminalUI import STDOUT
 
 
 class QiangGuoXianFengAPI:
@@ -48,17 +48,11 @@ class QiangGuoXianFengAPI:
                 if d["code"] == 99999:
                     return d
                 elif d["code"] == 10002:
-                    raise QiangGuoXianFengAPI.BadAuthorizationError(
-                        d.get("msg", "Authorization failed")
-                    )
+                    raise QiangGuoXianFengAPI.BadAuthorizationError(d.get("msg", "Authorization failed"))
                 elif d["code"] == 10003:
-                    raise QiangGuoXianFengAPI.UnauthorizedError(
-                        d.get("msg", "Permission denied")
-                    )
+                    raise QiangGuoXianFengAPI.UnauthorizedError(d.get("msg", "Permission denied"))
                 elif d["code"] == 20000:
-                    raise QiangGuoXianFengAPI.FatalAPIError(
-                        f"API failed with code {d['code']}"
-                    )
+                    raise QiangGuoXianFengAPI.FatalAPIError(f"API failed with code {d['code']}")
                 else:
                     raise IOError(f"API failed with code {d['code']}")
             except IOError as arg:
@@ -103,9 +97,7 @@ class QiangGuoXianFengAPI:
         return d["data"]
 
     def get_lesson_list(self):
-        return self._fetch_pagination(
-            f"{self._base_url}/trainingApi/v1/lesson/myLesson", {}, 8
-        )
+        return self._fetch_pagination(f"{self._base_url}/trainingApi/v1/lesson/myLesson", {}, 8)
 
     def get_video_list(self, lesson_id):
         return self._fetch_pagination(
@@ -217,45 +209,51 @@ class AutoTrainer:
     def manual_login(self):
         while True:
             try:
-                print("请登录", c=3)
-                user_id = input("  请输入账号: ", c=7)
-                user_pwd = input("  请输入密码: ", c=7)
-                print("  正在获取验证码", c=5)
+                STDOUT.add_line("请登录", 3)
+                input_line = STDOUT.add_line("  请输入账号: ", 7)
+                user_id = input()
+                input_line.write(f"  已选择账号: {user_id}", 7)
+                input_line = STDOUT.add_line("  请输入密码: ", 7)
+                user_pwd = input()
+                STDOUT.remove_line(input_line)
+                captcha_line = STDOUT.add_line("  正在获取验证码", 5)
                 captcha = self.api.get_captcha()
-                print("    请在弹出的窗口中查看验证码图片，然后关闭该窗口", c=6)
+                captcha_line.write("  请在弹出的窗口中查看验证码图片，然后关闭该窗口", 6)
                 captcha_obj = QiangGuoXianFengCaptcha(captcha["base64Str"])
                 captcha_code = captcha_obj.solve_challenge()
-                info = self.api.login(
-                    user_id, user_pwd, captcha["captchaId"], captcha_code
-                )
+                info = self.api.login(user_id, user_pwd, captcha["captchaId"], captcha_code)
                 break
             except QiangGuoXianFengAPI.BadAuthorizationError as arg:
-                print(f"  登录失败，填写有误: {arg}", c=3)
+                STDOUT.add_line(f"  登录失败，填写有误: {arg}", 3)
             except QiangGuoXianFengAPI.FatalAPIError as arg:
-                print(f"  登录失败，意外错误：{arg}", c=3)
-        print(f"  登录成功，欢迎`{info['userName']}`!", c=2)
+                STDOUT.add_line(f"  登录失败，意外错误：{arg}", 3)
+        STDOUT.remove_all_lines()
+        STDOUT.add_line(f"登录成功，欢迎`{info['userName']}`!", 2)
 
     def _watch(self, resource_id: int, start_time: str, total_time: str):
         self._now_jobs += 1
+        progress_line = STDOUT.add_line(
+            f"    (视频资源 {resource_id}) 正在准备",
+            7,
+        )
         try:
             start = AutoTrainer._hhmmss_to_second(start_time)
+            start = 120
             total = AutoTrainer._hhmmss_to_second(total_time)
             for now in range(start, total, self._report_interval):
                 now += (random.random() - 0.5) * 2 * self._report_randomness
                 now_time = AutoTrainer._second_to_hhmmss(now)
-                print(
-                    f"  (视频资源 {resource_id}) 正在观看 {now_time} / {total_time} ({now / total:.0%})",
-                    c=7,
+                progress_line.write(
+                    f"    (视频资源 {resource_id}) 正在观看 {now_time} / {total_time} ({now / total:.0%})",
+                    7,
                 )
-                self.api.set_resource_progress(
-                    resource_id, AutoTrainer._second_to_hhmmss(now)
-                )
+                self.api.set_resource_progress(resource_id, AutoTrainer._second_to_hhmmss(now))
                 time.sleep(self._report_interval * AutoTrainer.PLAYING_TIME_SCALE)
-            print(f"  (视频资源 {resource_id}) 正在结束观看", c=7)
+            progress_line.write(f"    (视频资源 {resource_id}) 正在结束观看", 7)
             for _ in range(AutoTrainer.FINISHING_REPORT_TIMES):
                 self.api.set_resource_progress(resource_id, total_time)
                 time.sleep(self._report_interval * AutoTrainer.PLAYING_TIME_SCALE)
-            print(f"  (视频资源 {resource_id}) 已完成", c=2)
+            progress_line.write(f"    (视频资源 {resource_id}) 已完成", 2)
         finally:
             self._now_jobs -= 1
 
@@ -276,16 +274,13 @@ class AutoTrainer:
         self._threads.append(thread)
 
     def watch_all(self):
-        print("正在查询课程列表", c=5)
+        STDOUT.add_line("正在查询课程列表", 5)
         lessons = self.api.get_lesson_list()
         for l in lessons:
-            print(f"(课程 {l['lessonId']}) `{l['lessonTitle']}`", c=6)
+            STDOUT.add_line(f"(课程 {l['lessonId']}) `{l['lessonTitle']}`", 6)
             videos = self.api.get_video_list(l["lessonId"])
             for v in videos:
-                print(
-                    f"  (视频 {v['videoId']}) {'已完成' if v['complete'] else ''} `{v['videoTitle']}`",
-                    c=6,
-                )
+                STDOUT.add_line(f"  (视频 {v['videoId']}) `{v['videoTitle']}`", 6)
                 if not v["complete"]:
                     resources = self.api.get_resource_list(v["videoId"])
                     for r in resources:
@@ -299,22 +294,20 @@ class AutoTrainer:
                 return i
         return None
 
-    def do_lesson_exam(
-        self, lesson_exam: dict, expected_error=2, pass_score=80, max_retries=5
-    ):
+    def do_lesson_exam(self, lesson_exam: dict, expected_error=2, pass_score=85, max_retries=5):
         for i in range(max_retries):
             time.sleep(1)
             # Request to start an exam
             lesson_id = lesson_exam["lessonId"]
             stage_id = lesson_exam["stageId"]
-            print(f"  开始课程考试 {lesson_id} (尝试 #{i + 1})", c=5)
+            STDOUT.add_line(f"  开始课程考试 {lesson_id} (尝试 #{i + 1})", 5)
             exam = self.api.get_lesson_exam_start(lesson_id, stage_id)
             report_id = exam["recordId"]
             question_list = sorted(exam["questionList"], key=lambda x: x["questionId"])
             # Figure out answers
             has_right_answers = {}
             guess_answers = {}
-            print(f"  (考卷 {report_id}) 一共有题目 {len(question_list)} 道", c=7)
+            STDOUT.add_line(f"  (考卷 {report_id}) 一共有题目 {len(question_list)} 道", 7)
             for q in question_list:
                 question_id = q["questionId"]
                 if question_id in self._right_answers:
@@ -328,54 +321,52 @@ class AutoTrainer:
                         )
                         guess_answers[question_id] = "|".join(map(str, guess_this))
                     else:
-                        raise RuntimeError(
-                            f"Not supported question type: {q['questionType']}"
-                        )
-            print(f"  (考卷 {report_id}) 记得答案的题目有 {len(has_right_answers)} 道")
+                        raise RuntimeError(f"Not supported question type: {q['questionType']}")
+            STDOUT.add_line(
+                f"  (考卷 {report_id}) 记得答案的题目有 {len(has_right_answers)} 道",
+                7,
+            )
             while len(guess_answers) <= expected_error:
                 k, v = random.choice(tuple(has_right_answers.items()))
                 has_right_answers.pop(k)
                 q = AutoTrainer._find_by_property(question_list, "questionId", k)
-                guess_answers[k] = random.choice(
-                    [a["answerId"] for a in q["answerList"]]
-                )
+                guess_answers[k] = random.choice([a["answerId"] for a in q["answerList"]])
             # Submit exam
             my_answers = {**guess_answers, **has_right_answers}
             saved_answers = {}
-            print(
-                f"  (考卷 {report_id}) 正在填写答案 (需要等待约 {len(my_answers) * 4} 秒)",
-                c=7,
-            )
-            for k, v in my_answers.items():
-                saved_answers[k] = v
-                self.api.set_exam_temp_answer(report_id, saved_answers)
+            display_line = STDOUT.add_line(f"  (考卷 {report_id}) 正在填写答案", 7)
+            for j, k in enumerate(my_answers.keys()):
+                display_line.write(f"  (考卷 {report_id}) 正在填写答案 已填写 {j} 道", 7)
                 time.sleep(random.randint(3, 5))
-            print(f"  (考卷 {report_id}) 正在结束考试", c=7)
+                saved_answers[k] = my_answers[k]
+                self.api.set_exam_temp_answer(report_id, saved_answers)
+            STDOUT.remove_line(display_line)
+            STDOUT.add_line(f"  (考卷 {report_id}) 正在结束考试", 7)
             rst = self.api.set_exam_final_answer(report_id, saved_answers)
             # Get report
-            print(f"  (考卷 {report_id}) 正在获取参考答案", c=7)
+            STDOUT.add_line(f"  (考卷 {report_id}) 正在获取参考答案", 7)
             question_list_with_answer = self.api.get_exam_report(report_id)["list"]
             for qa in question_list_with_answer:
                 self._right_answers[qa["questionId"]] = qa["rightAnswer"]
             if rst["score"] >= pass_score:
-                print(
+                STDOUT.add_line(
                     f"  (考卷 {report_id}) 成功通过! 分数 {rst['score']} (尝试 #{i + 1})",
-                    c=2,
+                    2,
                 )
                 break
             else:
-                print(
+                STDOUT.add_line(
                     f"  (考卷 {report_id}) 未通过! 分数 {rst['score']} (尝试 #{i + 1})",
-                    c=3,
+                    3,
                 )
 
-    def do_lesson_exam_all(self, pass_score=80):
-        print("正在查询课程考试列表", c=5)
+    def do_lesson_exam_all(self, pass_score=85):
+        STDOUT.add_line("正在查询课程考试列表", 5)
         exams = self.api.get_lesson_exam_list()
         for e in exams:
-            print(
+            STDOUT.add_line(
                 f"(课程考试 {e['lessonId']}) 当前最高分 {e['maxScore']} `{e['lessonTitle']}`",
-                c=6,
+                6,
             )
             if e["maxScore"] < pass_score:
                 self.do_lesson_exam(e, pass_score=pass_score)
@@ -383,55 +374,76 @@ class AutoTrainer:
 
 if __name__ == "__main__":
     try:
-        print("开始运行!", c=2)
+        STDOUT.add_line("开始运行!", 2)
 
-        while True:
-            print("请选择目标平台", c=3)
-            for site in QiangGuoXianFengBaseURL.all_names():
-                print(
-                    f"  - 平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
-                    c=7,
+        base_url = ""
+        while not base_url:
+            STDOUT.add_line("请选择目标平台", 3)
+            site_map_lines = {
+                site: STDOUT.add_line(
+                    f"    平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
+                    7,
                 )
-            site_code = input("  请输入完整的平台代码: ", c=7)
-            if QiangGuoXianFengBaseURL.contains_name(site_code):
-                break
+                for site in QiangGuoXianFengBaseURL.all_names()
+            }
+            input_line = STDOUT.add_line("  请输入完整的平台代码: ", 7)
+            site_code = input()
+            STDOUT.remove_line(input_line)
+            for site in site_map_lines:
+                if site == site_code.upper():
+                    site_map_lines[site].write(
+                        f"  > 平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
+                        2,
+                    )
+                    base_url = QiangGuoXianFengBaseURL.of_name(site_code).value
+                    break
 
-        base_url = QiangGuoXianFengBaseURL.of_name(site_code).value
+        do_option1 = False
+        do_option2 = False
+        while not (do_option1 or do_option2):
+            STDOUT.add_line("请选择任务类型", 3)
+            option1 = STDOUT.add_line("    1: 视频课程", 7)
+            option2 = STDOUT.add_line("    2: 课程考试", 7)
 
-        while True:
-            print("请选择任务类型", c=3)
-            print("  1=视频课程, 2=课程考试, 3=全选", c=7)
-            task_code = input("  请输入序号: ", c=7)
-            if task_code in ["1", "2", "3"]:
-                break
+            input_line = STDOUT.add_line("  请输入任务序号，用空格分隔多个序号: ", 7)
+            task_code = input()
+            STDOUT.remove_line(input_line)
+            do_option1 = "1" in task_code.split()
+            do_option2 = "2" in task_code.split()
+            if do_option1:
+                option1.write("  > 1: 视频课程", 2)
+            if do_option2:
+                option2.write("  > 2: 课程考试", 2)
 
+        STDOUT.add_line("请选择任务参数", 3)
         DEFAULT_MAX_CONCURRENT = 5
         try:
-            print("请设置任务参数", c=3)
-            max_concurrent = int(input(f"  同时观看课程数: ", c=7))
+            input_line = STDOUT.add_line("  同时观看课程数: ", 7)
+            max_concurrent = int(input())
+            input_line.write(str(max_concurrent), 7, append=True)
             assert 1 <= max_concurrent <= 20
         except:
             max_concurrent = DEFAULT_MAX_CONCURRENT
-            print(f"  已设为默认值 {DEFAULT_MAX_CONCURRENT}", c=7)
+            input_line.write(f"已设为默认值 {DEFAULT_MAX_CONCURRENT}", 7, append=True)
 
         auto = AutoTrainer(QiangGuoXianFengAPI(base_url), max_jobs=max_concurrent)
         auto.manual_login()
 
-        if task_code in ["1", "3"]:
+        if do_option1:
             auto.watch_all()
-        if task_code in ["2", "3"]:
+        if do_option2:
             auto.do_lesson_exam_all()
         while not auto.is_subthread_completed():
             time.sleep(0.1)
-        print("恭喜，所选的任务已完成!", c=2)
+        STDOUT.add_line(f"恭喜, 所选的任务已完成! ", 2)
         input()
     except KeyboardInterrupt as arg:
-        print("用户手动终止", c=1)
-        print(type(arg).__name__, c=3)
+        STDOUT.add_line(f"用户手动终止 ", 1)
+        STDOUT.add_line(type(arg).__name__, 3)
         input()
     except BaseException as arg:
-        print("发生了意外错误导致程序终止", c=1)
-        print(type(arg).__name__, c=3)
-        print(arg, c=3)
+        STDOUT.add_line(f"发生了意外错误导致程序终止 ", 1)
+        STDOUT.add_line(type(arg).__name__, 3)
+        STDOUT.add_line(str(arg), 3)
         input()
         raise arg
