@@ -1,0 +1,20 @@
+{
+    "code": 99999,
+    "data": {
+        "userId": 12345,
+        "userName": "***",
+        "userSid": "U20***",
+        "phase": "积极分子",
+        "appId": 2,
+        "partyBranch": "***党委",
+        "lastLoginTime": "",
+        "token": "***",
+        "avatar": "https://***",
+        "stageId": 123,
+        "stageName": "第***期***",
+        "endDate": "20**-**-**",
+        "status": 0,
+        "hasZt": 0
+    },
+    "msg": ""
+}

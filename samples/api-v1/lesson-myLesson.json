@@ -1,0 +1,33 @@
+{
+    "code": 99999,
+    "data": {
+        "page": {
+            "count": 1,
+            "pageNum": 1,
+            "pageSize": 8
+        },
+        "list": [
+            {
+                "stageId": 123,
+                "lessonId": 123,
+                "versionId": 123,
+                "lessonTitle": "正确认识***",
+                "lessonIntro": "***等基本知识。",
+                "sortNumber": 123,
+                "titleImage": "https://***.png",
+                "must_count": 123,
+                "must_complete_count": 123,
+                "take_count": 0,
+                "take_complete_count": 0,
+                "earnedHours": 12.3,
+                "is_required": 1,
+                "is_exam": 1,
+                "ExamPassScore": 60,
+                "exam_count": 3,
+                "exam_max_score": 30,
+                "complete": 0
+            }
+        ]
+    },
+    "msg": ""
+}

@@ -1,0 +1,32 @@
+{
+    "code": 99999,
+    "data": {
+        "page": {
+            "count": 1,
+            "pageNum": 1,
+            "pageSize": 10
+        },
+        "list": [
+            {
+                "lessonId": 123,
+                "lessonTitle": "正确认识***",
+                "videoId": 123,
+                "videoTitle": "***第一课",
+                "videoSpeaker": "",
+                "isRequired": 1,
+                "videoTag": "微课件",
+                "videoIntro": "本系列课程***",
+                "resourceCount": 6,
+                "completeCount": 6,
+                "hours": 1,
+                "zanCount": 123,
+                "isZan": 0,
+                "progress": "100.00%",
+                "videoImage": "https://***.jpg",
+                "complete": 1
+            }
+        ],
+        "enableExam": 1
+    },
+    "msg": ""
+}

@@ -1,0 +1,56 @@
+{
+    "code": 99999,
+    "data": {
+        "lessonId": 0,
+        "lessonTitle": "",
+        "videoId": 123,
+        "videoTitle": "***",
+        "videoSpeaker": "",
+        "isRequired": 1,
+        "videoTag": "微课件",
+        "videoIntro": "***介绍。",
+        "resourceCount": 0,
+        "completeCount": 0,
+        "hours": 12.3,
+        "zanCount": 123,
+        "progress": "",
+        "videoImage": "https://***.jpg",
+        "complete": 1,
+        "lesson": {
+            "lessonId": 123,
+            "lessonTitle": "***",
+            "lessonIntro": "***",
+            "sortNumber": 1054,
+            "kernelHint": "",
+            "lessonThink": "",
+            "titleImage": "/***.jpg",
+            "lessonDuration": "",
+            "hasHomepage": 0,
+            "lessonTag": "123",
+            "versionId": 0,
+            "wapImage": "",
+            "addTime": "2023-**-**T**:**:**+08:00",
+            "updateTime": "2023-**-**T**:**:**+08:00",
+            "deleted": 0,
+            "pubId": 123
+        },
+        "createTime": "2023-**-**T**:**:**+08:00",
+        "videoSource": "",
+        "selectCount": 2,
+        "videoSpeakerIntro": "",
+        "resourceList": [
+            {
+                "resourceId": 123,
+                "resourceTitle": "***",
+                "resourceUrl": "/***.m3u8",
+                "sortNum": 2,
+                "videoId": 123,
+                "resourceDuration": "00:12:34",
+                "resourceStatue": 1
+            }
+        ],
+        "isZan": 0,
+        "isSelect": 0
+    },
+    "msg": ""
+}
