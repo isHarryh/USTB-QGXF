@@ -9,6 +9,7 @@ import time
 
 from src.Captcha import QiangGuoXianFengCaptcha
 from src.Cipher import rsa_encrypt
+from src.Config import Config
 from src.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
 from src.TerminalUI import STDOUT
 
@@ -34,6 +35,10 @@ class QiangGuoXianFengAPI:
         self.base_url = base_url
         self._headers = {"User-Agent": HttpUserAgent.generate_user_agent().value}
         self._timeout = timeout
+
+    @property
+    def token(self):
+        return self._headers["Token"]
 
     def _send(self, url, data=None, max_retries=1, as_json=False, use_get=False):
         for _ in range(max(1, max_retries)):
@@ -98,6 +103,12 @@ class QiangGuoXianFengAPI:
             },
         )
         self._headers["Token"] = d["data"]["token"]
+        return d["data"]
+
+    def get_user_info(self, new_token=None):
+        if new_token:
+            self._headers["Token"] = new_token
+        d = self._send(f"{self.base_url}/trainingApi/v1/user/userInfo", max_retries=3)
         return d["data"]
 
     def get_lesson_list(self):
@@ -210,6 +221,39 @@ class AutoTrainer:
                 return False
         return True
 
+    def auto_login(self):
+        base_url = Config.get("connection")["baseUrl"]
+        token = Config.get("connection")["token"]
+        if not (base_url and token):
+            return False
+
+        display_line = STDOUT.add_line(f"正在校验身份信息", 5)
+        try:
+            self.api.base_url = base_url
+            info = self.api.get_user_info(token)
+
+            display_line.write("请确认", 3)
+            STDOUT.add_line(f"您想要继续以 `{info['userName']}` 的身份登录 {self.api.base_url} 吗？", 7)
+            STDOUT.add_line(f"  Y = 是(默认), N = 忘记此账号并重新登录", 7)
+            input_line = STDOUT.add_line(f"  请选择 Y/N: ", 7)
+            if input().upper() == "N":
+                input_line.write("  已忘记此账号", 7)
+            else:
+                input_line.write("  已复用此账号", 7)
+                STDOUT.add_line(f"欢迎 `{info['userName']}`!", 2)
+                return True
+        except QiangGuoXianFengAPI.BadAuthorizationError:
+            pass
+        except QiangGuoXianFengAPI.FatalAPIError:
+            pass
+        except QiangGuoXianFengAPI.UnauthorizedError:
+            pass
+
+        display_line.write(f"未能自动登录, 可能是登录状态已过期", 7)
+        Config.set("connection", {"baseUrl": "", "token": ""})
+        Config.save_config()
+        return False
+
     def manual_login(self):
         while True:
             try:
@@ -231,8 +275,21 @@ class AutoTrainer:
                 STDOUT.add_line(f"  登录失败，填写有误: {arg}", 3)
             except QiangGuoXianFengAPI.FatalAPIError as arg:
                 STDOUT.add_line(f"  登录失败，意外错误：{arg}", 3)
-        STDOUT.remove_all_lines()
-        STDOUT.add_line(f"登录成功，欢迎`{info['userName']}`!", 2)
+        STDOUT.add_line(f"登录成功，欢迎 `{info['userName']}`!", 2)
+
+        STDOUT.add_line("请确认", 3)
+        STDOUT.add_line(f"您想要记住登录状态以便下次使用吗？", 7)
+        STDOUT.add_line(f"  Y = 是(默认), N = 否", 7)
+        input_line = STDOUT.add_line(f"  请选择 Y/N: ", 7)
+        if input().upper() == "N":
+            input_line.write("  已选择 否", 7)
+            Config.set("connection", {"baseUrl": "", "token": ""})
+            Config.save_config()
+        else:
+            input_line.write("  已选择 是", 7)
+            Config.set("connection", {"baseUrl": self.api.base_url, "token": self.api.token})
+            Config.save_config()
+        return True
 
     def _watch(self, resource_id: int, start_time: str, total_time: str):
         self._now_jobs += 1
@@ -381,28 +438,38 @@ if __name__ == "__main__":
     try:
         STDOUT.add_line("开始运行!", 2)
 
-        base_url = ""
-        while not base_url:
-            STDOUT.add_line("请选择目标平台", 3)
-            site_map_lines = {
-                site: STDOUT.add_line(
-                    f"    平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
-                    7,
-                )
-                for site in QiangGuoXianFengBaseURL.all_names()
-            }
-            input_line = STDOUT.add_line("  请输入完整的平台代码: ", 7)
-            site_code = input()
-            STDOUT.remove_line(input_line)
-            for site in site_map_lines:
-                if site == site_code.upper():
-                    site_map_lines[site].write(
-                        f"  > 平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
-                        2,
-                    )
-                    base_url = QiangGuoXianFengBaseURL.of_name(site_code).value
-                    break
+        Config.save_config()
 
+        auto = AutoTrainer(QiangGuoXianFengAPI())
+
+        # Login
+        if not auto.auto_login():
+            base_url = ""
+            while not base_url:
+                STDOUT.add_line("请选择目标平台", 3)
+                site_map_lines = {
+                    site: STDOUT.add_line(
+                        f"    平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
+                        7,
+                    )
+                    for site in QiangGuoXianFengBaseURL.all_names()
+                }
+                input_line = STDOUT.add_line("  请输入完整的平台代码: ", 7)
+                site_code = input()
+                STDOUT.remove_line(input_line)
+                for site in site_map_lines:
+                    if site == site_code.upper():
+                        site_map_lines[site].write(
+                            f"  > 平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
+                            2,
+                        )
+                        base_url = QiangGuoXianFengBaseURL.of_name(site_code).value
+                        break
+
+            auto.api.base_url = base_url
+            auto.manual_login()
+
+        # Select tasks
         do_option1 = False
         do_option2 = False
         while not (do_option1 or do_option2):
@@ -420,6 +487,7 @@ if __name__ == "__main__":
             if do_option2:
                 option2.write("  > 2: 课程考试", 2)
 
+        # Set options
         STDOUT.add_line("请选择任务参数", 3)
         DEFAULT_MAX_CONCURRENT = 5
         input_line = STDOUT.add_line("  同时观看课程数: ", 7)
@@ -431,9 +499,9 @@ if __name__ == "__main__":
             max_concurrent = DEFAULT_MAX_CONCURRENT
             input_line.write(f"已设为默认值 {DEFAULT_MAX_CONCURRENT}", 7, append=True)
 
-        auto = AutoTrainer(QiangGuoXianFengAPI(base_url), max_jobs=max_concurrent)
-        auto.manual_login()
+        auto.max_jobs = max_concurrent
 
+        # Start running
         if do_option1:
             auto.watch_all()
         if do_option2:
