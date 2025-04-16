@@ -26,9 +26,13 @@ class QiangGuoXianFengAPI:
         def __init__(self, *args):
             super().__init__(args)
 
-    def __init__(self, base_url, timeout=3):
+    class Undefined(str):
+        def __str__(self):
+            raise ValueError("This value is undefined")
+
+    def __init__(self, base_url: str = Undefined(), timeout: int = 3):
+        self.base_url = base_url
         self._headers = {"User-Agent": HttpUserAgent.generate_user_agent().value}
-        self._base_url = base_url
         self._timeout = timeout
 
     def _send(self, url, data=None, max_retries=1, as_json=False, use_get=False):
@@ -77,7 +81,7 @@ class QiangGuoXianFengAPI:
 
     def get_captcha(self):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/user/getCaptcha",
+            f"{self.base_url}/trainingApi/v1/user/getCaptcha",
             max_retries=3,
             use_get=True,
         )
@@ -85,7 +89,7 @@ class QiangGuoXianFengAPI:
 
     def login(self, user_id, user_pwd, captcha_id, captcha_code):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/user/login",
+            f"{self.base_url}/trainingApi/v1/user/login",
             data={
                 "userSid": user_id,
                 "password": rsa_encrypt(user_pwd),
@@ -97,11 +101,11 @@ class QiangGuoXianFengAPI:
         return d["data"]
 
     def get_lesson_list(self):
-        return self._fetch_pagination(f"{self._base_url}/trainingApi/v1/lesson/myLesson", {}, 8)
+        return self._fetch_pagination(f"{self.base_url}/trainingApi/v1/lesson/myLesson", {}, 8)
 
     def get_video_list(self, lesson_id):
         return self._fetch_pagination(
-            f"{self._base_url}/trainingApi/v1/lesson/lessonVideos",
+            f"{self.base_url}/trainingApi/v1/lesson/lessonVideos",
             {"lessonId": lesson_id, "showType": 0},
             10,
             as_json=True,
@@ -109,33 +113,33 @@ class QiangGuoXianFengAPI:
 
     def get_resource_list(self, video_id):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/lesson/lessonVideoDetail",
+            f"{self.base_url}/trainingApi/v1/lesson/lessonVideoDetail",
             data={"videoId": video_id},
         )
         return d["data"]["resourceList"]
 
     def get_resource_detail(self, resource_id):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/lesson/lessonVideoResourceDetail",
+            f"{self.base_url}/trainingApi/v1/lesson/lessonVideoResourceDetail",
             data={"resourceId": resource_id},
         )
         return d["data"]
 
     def set_resource_progress(self, resource_id, hhmmss):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/lesson/setResourceTime",
+            f"{self.base_url}/trainingApi/v1/lesson/setResourceTime",
             max_retries=10,
             data={"resourceId": resource_id, "videoTime": hhmmss},
         )
         return None
 
     def get_lesson_exam_list(self):
-        d = self._send(f"{self._base_url}/trainingApi/v1/exam/examLessonList")
+        d = self._send(f"{self.base_url}/trainingApi/v1/exam/examLessonList")
         return d["data"]
 
     def get_lesson_exam_start(self, lesson_id, stage_id):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/exam/startLessonExam",
+            f"{self.base_url}/trainingApi/v1/exam/startLessonExam",
             max_retries=3,
             data={"stageId": stage_id, "lessonId": lesson_id},
         )
@@ -143,7 +147,7 @@ class QiangGuoXianFengAPI:
 
     def set_exam_temp_answer(self, record_id, answer_dict):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/exam/saveExamAnswer",
+            f"{self.base_url}/trainingApi/v1/exam/saveExamAnswer",
             data={"recordId": record_id, "answerList": answer_dict},
             as_json=True,
         )
@@ -151,7 +155,7 @@ class QiangGuoXianFengAPI:
 
     def set_exam_final_answer(self, record_id, answer_dict):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/exam/submitExam",
+            f"{self.base_url}/trainingApi/v1/exam/submitExam",
             data={"recordId": record_id, "answerList": answer_dict},
             as_json=True,
         )
@@ -159,7 +163,7 @@ class QiangGuoXianFengAPI:
 
     def get_exam_report(self, record_id, right_type=-1):
         d = self._send(
-            f"{self._base_url}/trainingApi/v1/exam/examRecordDetail",
+            f"{self.base_url}/trainingApi/v1/exam/examRecordDetail",
             data={"recordId": record_id, "rightType": right_type},
         )
         return d["data"]
@@ -178,9 +182,9 @@ class AutoTrainer:
         report_randomness=1,
     ):
         self.api = api
+        self.max_jobs = max_jobs
         self._threads = []
         self._right_answers = {}
-        self._max_jobs = max_jobs
         self._now_jobs = 0
         self._report_interval = abs(report_interval)
         self._report_randomness = abs(report_randomness)
@@ -258,7 +262,7 @@ class AutoTrainer:
             self._now_jobs -= 1
 
     def watch(self, resource: dict):
-        while self._now_jobs >= self._max_jobs:
+        while self._now_jobs >= self.max_jobs:
             time.sleep(0.1)
         resource_id = resource["resourceId"]
         detail = self.api.get_resource_detail(resource_id)
