@@ -1,0 +1,41 @@
+{
+    "code": 99999,
+    "data": {
+        "userId": 123,
+        "userName": "***",
+        "userSid": "U20***",
+        "stageId": 123,
+        "stageName": "第***期***校",
+        "endDate": "2025-**-**",
+        "gender": "",
+        "nation": "",
+        "nationText": "",
+        "mobile": "",
+        "email": "",
+        "appId": 2,
+        "phase": "积极分子",
+        "orgName": "***学院",
+        "partyOrgName": "***党委",
+        "partyBranch": "***党委",
+        "orgId": 400,
+        "orgList": [
+            {
+                "orgId": 123,
+                "fullName": "***支部"
+            }
+        ],
+        "trueAvatar": "https://***.png",
+        "avatar": "https://***.png",
+        "partyCategory": 0,
+        "stageStatus": 1,
+        "stageStartTime": "2025-**-**",
+        "stageEndTime": "2025-**-**",
+        "status": 0,
+        "toBeComplete": [
+            3
+        ],
+        "flowPath": "学习、作业、考试",
+        "className": ""
+    },
+    "msg": ""
+}

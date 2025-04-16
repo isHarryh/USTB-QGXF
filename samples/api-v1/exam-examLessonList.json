@@ -1,0 +1,44 @@
+{
+    "code": 99999,
+    "data": [
+        {
+            "lessonId": 123,
+            "lessonTitle": "***",
+            "isRequired": 1,
+            "isFinish": 0,
+            "examTimes": 1,
+            "maxScore": 60,
+            "avgScore": 60,
+            "recordList": [
+                {
+                    "recordId": 123,
+                    "appId": 2,
+                    "lessonId": 123,
+                    "stageId": 123,
+                    "examScore": 60,
+                    "examPass": 1,
+                    "examStartDate": "2025-**-** **:**:**",
+                    "times": 123,
+                    "examTimes": 0,
+                    "maxScore": 0,
+                    "avgScore": 0
+                }
+            ],
+            "stageId": 123,
+            "versionId": 123
+        },
+        {
+            "lessonId": 123,
+            "lessonTitle": "***",
+            "isRequired": 1,
+            "isFinish": 0,
+            "examTimes": 0,
+            "maxScore": 0,
+            "avgScore": 0,
+            "recordList": null,
+            "stageId": 123,
+            "versionId": 123
+        }
+    ],
+    "msg": "ok"
+}

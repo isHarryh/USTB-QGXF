@@ -1,0 +1,70 @@
+{
+    "code": 99999,
+    "data": {
+        "recordId": 123,
+        "appId": 2,
+        "userSid": "U20***",
+        "userId": 123,
+        "lessonId": 123,
+        "stageId": 123,
+        "examScore": 0,
+        "examPass": 0,
+        "examStartDate": "2025-**-**T**:**:**+08:00",
+        "examEndDate": "0001-01-01T00:00:00Z",
+        "examIp": "***.***.***.***",
+        "statistics": "",
+        "paperInfo": "{\"lesson_id\":123,\"question_list\":[123,123]}",
+        "createDate": "2025-**-**T**:**:**+08:00",
+        "state": 0,
+        "answerRecord": "",
+        "markRecord": "",
+        "resultRecord": "",
+        "examType": 0,
+        "ticketCode": "",
+        "shortAnswerScore": "",
+        "shortAnswerTeacherId": 0,
+        "examPassType": 0,
+        "examId": 0,
+        "hasEssay": 0,
+        "isCheated": 0,
+        "cheatedWay": "",
+        "shortTime": "0001-01-01T00:00:00Z",
+        "endSecond": -123,
+        "examTitle": "***",
+        "questionList": [
+            {
+                "questionId": 123,
+                "lessonId": 123,
+                "questionTitle": "***",
+                "questionType": 1,
+                "questionLevel": 2,
+                "kId": "123",
+                "state": 1,
+                "createDate": "2022-**-**T**:**:**+08:00",
+                "questionPriority": 0,
+                "pubId": 123,
+                "updateTime": "2023-**-**T**:**:**+08:00",
+                "knowledge": "***",
+                "answerList": [
+                    {
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 0,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    }
+                ]
+            }
+        ],
+        "answerList": {
+            "123": "123"
+        },
+        "questionMark": null,
+        "enableSwitch": 0
+    },
+    "msg": "ok"
+}

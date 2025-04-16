@@ -1,0 +1,114 @@
+{
+    "code": 99999,
+    "data": {
+        "questionNum": {
+            "totalNum": 20,
+            "rightNum": 12,
+            "wrongNum": 8,
+            "missNum": 0,
+            "markNum": 0
+        },
+        "list": [
+            {
+                "questionId": 123,
+                "questionTitle": "***",
+                "questionType": 1,
+                "knowledge": "***",
+                "isRight": 0,
+                "answerList": [
+                    {
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 1,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    },
+                    {
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 1,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    },{
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 1,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    }
+                ],
+                "rightAnswer": "123",
+                "userAnswer": "123",
+                "errorRate": 0,
+                "isMark": 0,
+                "answerScore": 0
+            },
+            {
+                "questionId": 123,
+                "questionTitle": "***",
+                "questionType": 2,
+                "knowledge": "***",
+                "isRight": 0,
+                "answerList": [
+                    {
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 1,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    },
+                    {
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 1,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    },{
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 1,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    }
+                ],
+                "rightAnswer": "123|123",
+                "userAnswer": "123",
+                "errorRate": 0,
+                "isMark": 0,
+                "answerScore": 0
+            }
+        ],
+        "examId": 0,
+        "examTitle": "***",
+        "examScore": 60,
+        "examPass": 0,
+        "examStartDate": "2025-**-** **:**:**",
+        "examTimes": 123,
+        "hasEssay": 0
+    },
+    "msg": ""
+}

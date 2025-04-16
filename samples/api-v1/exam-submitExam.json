@@ -1,0 +1,14 @@
+{
+    "code": 99999,
+    "data": {
+        "isPass": 1,
+        "score": 60,
+        "canNext": 1,
+        "rightNum": 12,
+        "wrongNum": 8,
+        "notAnswerNum": 0,
+        "hasEssay": 0,
+        "isDisplayScore": 1
+    },
+    "msg": "ok"
+}
