@@ -1,6 +1,7 @@
 # Exclude
 /*/
 __pycache__/
+*config.json
 
 # Include
 !.vscode/
