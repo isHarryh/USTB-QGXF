@@ -7,11 +7,11 @@ import random
 import threading
 import time
 
-from src.Captcha import QiangGuoXianFengCaptcha
-from src.Cipher import rsa_encrypt
-from src.Config import Config
-from src.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
-from src.TerminalUI import STDOUT
+from src.data.Config import Config
+from src.data.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
+from src.utils.Captcha import QiangGuoXianFengCaptcha
+from src.utils.Cipher import rsa_encrypt
+from src.utils.TerminalUI import STDOUT
 
 
 class QiangGuoXianFengAPI:
