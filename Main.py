@@ -355,7 +355,7 @@ class AutoTrainer:
                 return i
         return None
 
-    def do_lesson_exam(self, lesson_exam: dict, expected_error=2, pass_score=85, max_retries=5):
+    def do_lesson_exam(self, lesson_exam: dict, pass_score=85, max_retries=5):
         for i in range(max_retries):
             time.sleep(1)
             # Request to start an exam
@@ -387,12 +387,6 @@ class AutoTrainer:
                 f"  (考卷 {report_id}) 记得答案的题目有 {len(has_right_answers)} 道",
                 7,
             )
-            while len(guess_answers) <= expected_error:
-                k, v = random.choice(tuple(has_right_answers.items()))
-                has_right_answers.pop(k)
-                q = AutoTrainer._find_by_property(question_list, "questionId", k)
-                assert q is not None, f"Cannot find the questionID {k}"
-                guess_answers[k] = random.choice([a["answerId"] for a in q["answerList"]])
             # Submit exam
             my_answers = {**guess_answers, **has_right_answers}
             saved_answers = {}
