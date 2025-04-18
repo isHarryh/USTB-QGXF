@@ -189,12 +189,14 @@ class AutoTrainer:
     def __init__(
         self,
         api: QiangGuoXianFengAPI,
-        max_jobs=10,
+        max_jobs=5,
+        pass_score=60,
         report_interval=10,
         report_randomness=1,
     ):
         self.api = api
         self.max_jobs = max_jobs
+        self.pass_score = pass_score
         self._threads = []
         self._now_jobs = 0
         self._report_interval = abs(report_interval)
@@ -348,19 +350,10 @@ class AutoTrainer:
                         self.watch(r)
                         time.sleep(AutoTrainer.START_PLAYING_INTERVAL)
 
-    @staticmethod
-    def _find_by_property(collection, property_name, property_value):
-        for i in collection:
-            if i[property_name] == property_value:
-                return i
-        return None
-
-    def do_lesson_exam(self, lesson_exam: dict, pass_score, max_retries=5):
+    def do_lesson_exam(self, lesson_id: int, stage_id: int, max_retries: int = 5):
         for i in range(max_retries):
             time.sleep(1)
             # Request to start an exam
-            lesson_id = lesson_exam["lessonId"]
-            stage_id = lesson_exam["stageId"]
             STDOUT.add_line(f"  开始课程考试 {lesson_id} (尝试 #{i + 1})", 5)
             exam = self.api.get_lesson_exam_start(lesson_id, stage_id)
             report_id = exam["recordId"]
@@ -408,19 +401,20 @@ class AutoTrainer:
             Config.set("memory", Question.dump_to_kv_table(memory + question_list_with_answer))
             Config.save_config()
             STDOUT.add_line(f"  (考卷 {report_id}) 已保存参考答案", 7)
-            if score >= pass_score:
+            if score >= self.pass_score:
                 STDOUT.add_line(
                     f"  (考卷 {report_id}) 成功通过! 分数 {score} (尝试 #{i + 1})",
                     2,
                 )
-                break
+                return
             else:
                 STDOUT.add_line(
                     f"  (考卷 {report_id}) 未通过! 分数 {score} (尝试 #{i + 1})",
                     3,
                 )
+        STDOUT.add_line("  已跳过此课程考试, 因为达到了最大尝试次数", 3)
 
-    def do_lesson_exam_all(self, pass_score=85):
+    def do_lesson_exam_all(self):
         STDOUT.add_line("正在查询课程考试列表", 5)
         exams = self.api.get_lesson_exam_list()
         for e in exams:
@@ -428,8 +422,31 @@ class AutoTrainer:
                 f"(课程考试 {e['lessonId']}) 当前最高分 {e['maxScore']} `{e['lessonTitle']}`",
                 6,
             )
-            if e["maxScore"] < pass_score:
-                self.do_lesson_exam(e, pass_score=pass_score)
+            if e["maxScore"] < self.pass_score:
+                time.sleep(random.randint(3, 5))
+                self.do_lesson_exam(e["lessonId"], e["stageId"])
+            else:
+                STDOUT.add_line("  已跳过此课程考试, 因为分数已达标", 2)
+
+
+def input_validated_int(prompt: str, default_val: int, min_val: int, max_val: int):
+    input_line = STDOUT.add_line(f"  {prompt}", 7)
+    input_str = input()
+    if input_str:
+        assert min_val <= default_val <= max_val
+        try:
+            input_val = int(input_str)
+            if input_val < min_val:
+                input_line.write(f"  输入的数 {input_val} 过小 ")
+            elif input_val > max_val:
+                input_line.write(f"  输入的数 {input_val} 过大 ")
+            else:
+                input_line.write(str(input_val), append=True)
+                return input_val
+        except:
+            input_line.write(f"  输入非法 ")
+    input_line.write(f"已设为默认值 {default_val}", append=True)
+    return default_val
 
 
 if __name__ == "__main__":
@@ -486,18 +503,11 @@ if __name__ == "__main__":
                 option2.write("  > 2: 课程考试", 2)
 
         # Set options
-        STDOUT.add_line("请选择任务参数", 3)
-        DEFAULT_MAX_CONCURRENT = 5
-        input_line = STDOUT.add_line("  同时观看课程数: ", 7)
-        try:
-            max_concurrent = int(input())
-            input_line.write(str(max_concurrent), 7, append=True)
-            assert 1 <= max_concurrent <= 20
-        except:
-            max_concurrent = DEFAULT_MAX_CONCURRENT
-            input_line.write(f"已设为默认值 {DEFAULT_MAX_CONCURRENT}", 7, append=True)
-
-        auto.max_jobs = max_concurrent
+        STDOUT.add_line("请输入任务参数", 3)
+        if do_option1:
+            auto.max_jobs = input_validated_int("同时观看课程数: ", 5, 1, 20)
+        if do_option2:
+            auto.pass_score = input_validated_int("通过考试所需分数: ", 60, 0, 100)
 
         # Start running
         if do_option1:
