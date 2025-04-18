@@ -9,6 +9,7 @@ import time
 
 from src.data.Config import Config
 from src.data.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
+from src.data.Question import Question
 from src.utils.Captcha import QiangGuoXianFengCaptcha
 from src.utils.Cipher import rsa_encrypt
 from src.utils.TerminalUI import STDOUT
@@ -195,7 +196,6 @@ class AutoTrainer:
         self.api = api
         self.max_jobs = max_jobs
         self._threads = []
-        self._right_answers = {}
         self._now_jobs = 0
         self._report_interval = abs(report_interval)
         self._report_randomness = abs(report_randomness)
@@ -355,7 +355,7 @@ class AutoTrainer:
                 return i
         return None
 
-    def do_lesson_exam(self, lesson_exam: dict, pass_score=85, max_retries=5):
+    def do_lesson_exam(self, lesson_exam: dict, pass_score, max_retries=5):
         for i in range(max_retries):
             time.sleep(1)
             # Request to start an exam
@@ -364,25 +364,27 @@ class AutoTrainer:
             STDOUT.add_line(f"  开始课程考试 {lesson_id} (尝试 #{i + 1})", 5)
             exam = self.api.get_lesson_exam_start(lesson_id, stage_id)
             report_id = exam["recordId"]
-            question_list = sorted(exam["questionList"], key=lambda x: x["questionId"])
+            question_list = sorted(map(Question.load_from_web_data, exam["questionList"]))
             # Figure out answers
             has_right_answers = {}
             guess_answers = {}
             STDOUT.add_line(f"  (考卷 {report_id}) 一共有题目 {len(question_list)} 道", 7)
+            memory = Question.load_from_kv_table(Config.get("memory"))
             for q in question_list:
-                question_id = q["questionId"]
-                if question_id in self._right_answers:
-                    has_right_answers[question_id] = self._right_answers[question_id]
-                else:
-                    if q["questionType"] in [1, 2, 3]:
+                for m in memory:
+                    if m.id == q.id:
+                        has_right_answers[q.id] = m.right_answer
+                        break
+                if q.id not in has_right_answers:
+                    if q.type in [1, 2, 3]:
                         # Single=1, Multiple=2, TF=3
                         guess_this = random.choices(
-                            [a["answerId"] for a in q["answerList"]],
-                            k=2 if q["questionType"] == 2 else 1,
+                            [a.id for a in q.answers],
+                            k=2 if q.type == 2 else 1,
                         )
-                        guess_answers[question_id] = "|".join(map(str, guess_this))
+                        guess_answers[q.id] = "|".join(map(str, guess_this))
                     else:
-                        raise RuntimeError(f"Not supported question type: {q['questionType']}")
+                        raise RuntimeError(f"Not supported question type: {q.type}")
             STDOUT.add_line(
                 f"  (考卷 {report_id}) 记得答案的题目有 {len(has_right_answers)} 道",
                 7,
@@ -392,27 +394,29 @@ class AutoTrainer:
             saved_answers = {}
             display_line = STDOUT.add_line(f"  (考卷 {report_id}) 正在填写答案", 7)
             for j, k in enumerate(my_answers.keys()):
-                display_line.write(f"  (考卷 {report_id}) 正在填写答案 已填写 {j} 道", 7)
                 time.sleep(random.randint(3, 5))
                 saved_answers[k] = my_answers[k]
                 self.api.set_exam_temp_answer(report_id, saved_answers)
-            STDOUT.remove_line(display_line)
-            STDOUT.add_line(f"  (考卷 {report_id}) 正在结束考试", 7)
-            rst = self.api.set_exam_final_answer(report_id, saved_answers)
-            # Get report
-            STDOUT.add_line(f"  (考卷 {report_id}) 正在获取参考答案", 7)
-            question_list_with_answer = self.api.get_exam_report(report_id)["list"]
-            for qa in question_list_with_answer:
-                self._right_answers[qa["questionId"]] = qa["rightAnswer"]
-            if rst["score"] >= pass_score:
+                display_line.write(f"  (考卷 {report_id}) 正在填写答案 已填写 {j + 1} 道", 7)
+            time.sleep(random.randint(3, 5))
+            score = self.api.set_exam_final_answer(report_id, saved_answers)["score"]
+            STDOUT.add_line(f"  (考卷 {report_id}) 已交卷", 7)
+            # Get right answers
+            question_list_with_answer = list(
+                map(Question.load_from_web_data, self.api.get_exam_report(report_id)["list"])
+            )
+            Config.set("memory", Question.dump_to_kv_table(memory + question_list_with_answer))
+            Config.save_config()
+            STDOUT.add_line(f"  (考卷 {report_id}) 已保存参考答案", 7)
+            if score >= pass_score:
                 STDOUT.add_line(
-                    f"  (考卷 {report_id}) 成功通过! 分数 {rst['score']} (尝试 #{i + 1})",
+                    f"  (考卷 {report_id}) 成功通过! 分数 {score} (尝试 #{i + 1})",
                     2,
                 )
                 break
             else:
                 STDOUT.add_line(
-                    f"  (考卷 {report_id}) 未通过! 分数 {rst['score']} (尝试 #{i + 1})",
+                    f"  (考卷 {report_id}) 未通过! 分数 {score} (尝试 #{i + 1})",
                     3,
                 )
 
