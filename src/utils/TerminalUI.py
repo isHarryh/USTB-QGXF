@@ -132,9 +132,9 @@ class TerminalUI:
             self._condition.notify_all()
         self._thread.join()
 
-    def _clear(self):
+    def _clear(self, with_reset: bool = True):
         with self._condition:
-            self.target.write("\x1b[2J\x1b[H")
+            self.target.write("\x1bc\x1b[2J\x1b[H" if with_reset else "\x1b[2J\x1b[H")
             self.target.flush()
 
     def _loop(self):
