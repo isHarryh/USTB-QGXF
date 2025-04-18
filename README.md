@@ -1,7 +1,7 @@
 USTB-QGXF
 ==========
 Auto complete USTB QiangGuoXianFeng series lessons  
-北京科技大学强国先锋系列课程自动代理（国防教育/DXPX）**` v2.0 `**
+北京科技大学强国先锋系列课程自动代理（国防教育/DXPX）**` v2.1 `**
 
 <sup> This project only supports Chinese docs. If you are an English user, feel free to contact us. </sup>
 
@@ -30,9 +30,12 @@ Auto complete USTB QiangGuoXianFeng series lessons
    > **提示：**
    > 1. “考试”不支持多个考试同时进行，且每场考试需要少许时间来提交答案。
    > 2. “考试”的原理是记忆题目和答案，所以程序需要连续几次考试才能达到较高分数，也就是说初次考试会随机作答。
+4. **基于配置文件的记忆：**  
+   可以记住登录状态和题目的参考答案吗，详见[配置文件](#配置文件-configuration)章节。
 
 ### 功能性更新日志
 
+- `v2.1` 新增了基于配置文件的记忆，支持持久化保存题库；新增了全新的终端界面，提供更好的交互体验。
 - `v2.0` 新增了对 DXPX 平台的支持。
 
 ## 使用方法 <sub>Usage</sub>
@@ -44,6 +47,43 @@ Auto complete USTB QiangGuoXianFeng series lessons
 ### B. 备选方案
 
 对于非 Windows 系统或者开发者，可[下载](https://github.com/isHarryh/USTB-QGXF/archive/refs/heads/main.zip)（或克隆）本仓库的源码。确保已安装 [Python](https://www.python.org) 3.9+ 运行环境，并安装了 Pillow、pycryptodome、requests 库（有条件者建议使用 [Poetry](https://python-poetry.org) 依赖管理工具）。最后，运行 `Main.py` 即可。
+
+## 配置文件 <sub>Configuration</sub>
+
+下面介绍配置文件的格式，以便高级用户使用。如果您不清楚您在做什么，请不要修改配置文件。
+
+配置文件直接位于程序的工作目录下，命名为 `USTB-QGXF-Config.json`。配置文件不存在时会自动创建。配置文件的内容示例如下：
+
+```json
+{
+    "connection": {
+        "baseUrl": "https://...",
+        "token": "Ygp...bDg=="
+    },
+    "memory": {
+        "0": {
+            "title": "This is an example multiple-selection question record.",
+            "type": 2,
+            "answers": {
+                "1": {
+                    "title": "Example option 1."
+                },
+                "2": {
+                    "title": "Example option 2."
+                },
+                "3": {
+                    "title": "Example option 3."
+                }
+            },
+            "rightAnswer": "1|2|3"
+        }
+    }
+}
+```
+
+`connection` 字段保存了上一次登录的基本信息，包括 `baseUrl`（平台的网址）和 `token`（令牌）。当这 `baseUrl` 和 `token` 都不为空时，程序运行后会验证登录信息是否有效，如果登录失效，则会回退到手动登录模式。
+
+`memory` 字段中，以题目 ID 为键，保存着先前已经遇到过的题目的信息。每次课程考试结束，都会获取该次考试的参考答案，然后对 `memory` 进行增量更新。
 
 ## 许可证 <sub>Licensing</sub>
 
