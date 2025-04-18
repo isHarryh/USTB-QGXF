@@ -337,6 +337,7 @@ class AutoTrainer:
         self._threads.append(thread)
 
     def watch_all(self):
+        STDOUT.remove_all_lines()
         STDOUT.add_line("正在查询课程列表", 5)
         lessons = self.api.get_lesson_list()
         for l in lessons:
@@ -349,6 +350,11 @@ class AutoTrainer:
                     for r in resources:
                         self.watch(r)
                         time.sleep(AutoTrainer.START_PLAYING_INTERVAL)
+        display_line = STDOUT.add_line("请等待子线程完成任务...", 5)
+        while not auto.is_subthread_completed():
+            time.sleep(0.1)
+        display_line.write("此项任务已完成!", 2)
+        time.sleep(1)
 
     def do_lesson_exam(self, lesson_id: int, stage_id: int, max_retries: int = 5):
         for i in range(max_retries):
@@ -415,6 +421,7 @@ class AutoTrainer:
         STDOUT.add_line("  已跳过此课程考试, 因为达到了最大尝试次数", 3)
 
     def do_lesson_exam_all(self):
+        STDOUT.remove_all_lines()
         STDOUT.add_line("正在查询课程考试列表", 5)
         exams = self.api.get_lesson_exam_list()
         for e in exams:
@@ -427,6 +434,8 @@ class AutoTrainer:
                 self.do_lesson_exam(e["lessonId"], e["stageId"])
             else:
                 STDOUT.add_line("  已跳过此课程考试, 因为分数已达标", 2)
+        STDOUT.add_line("此项任务已完成!", 2)
+        time.sleep(1)
 
 
 def input_validated_int(prompt: str, default_val: int, min_val: int, max_val: int):
@@ -508,15 +517,15 @@ if __name__ == "__main__":
             auto.max_jobs = input_validated_int("同时观看课程数: ", 5, 1, 20)
         if do_option2:
             auto.pass_score = input_validated_int("通过考试所需分数: ", 60, 0, 100)
+        STDOUT.add_line("准备完毕", 2)
+        time.sleep(1)
 
         # Start running
         if do_option1:
             auto.watch_all()
         if do_option2:
             auto.do_lesson_exam_all()
-        while not auto.is_subthread_completed():
-            time.sleep(0.1)
-        STDOUT.add_line(f"恭喜, 所选的任务已完成! ", 2)
+        STDOUT.add_line(f"恭喜, 所选的所有任务已完成!", 2)
         input()
     except KeyboardInterrupt as arg:
         STDOUT.add_line(f"用户手动终止 ", 1)
