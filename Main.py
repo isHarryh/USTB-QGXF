@@ -322,18 +322,20 @@ class AutoTrainer:
             self._now_jobs -= 1
 
     def watch(self, resource: dict):
-        while self._now_jobs >= self.max_jobs:
-            time.sleep(0.1)
         resource_id = resource["resourceId"]
         detail = self.api.get_resource_detail(resource_id)
         start_time = detail["resource_time"]
         total_time = detail["resourceDuration"]
+        waiting_line = STDOUT.add_line(f"    (视频资源 {resource_id}) 正在排队", 7)
+        while self._now_jobs >= self.max_jobs:
+            time.sleep(0.1)
         thread = threading.Thread(
             target=self._watch,
             name=f"AutoTrain#{resource_id}",
             args=(resource_id, start_time, total_time),
             daemon=True,
         )
+        STDOUT.remove_line(waiting_line)
         thread.start()
         self._threads.append(thread)
 
