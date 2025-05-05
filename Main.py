@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2024, Harry Huang
 # @ MIT License
+from typing import Optional
+
 import json
 import requests
 import random
@@ -437,16 +439,15 @@ class AutoTrainer:
         time.sleep(1)
 
 
-def input_validated_int(prompt: str, default_val: int, min_val: int, max_val: int):
+def input_validated_int(prompt: str, default_val: int, min_val: Optional[int], max_val: Optional[int]):
     input_line = STDOUT.add_line(f"  {prompt}", 7)
     input_str = input()
     if input_str:
-        assert min_val <= default_val <= max_val
         try:
             input_val = int(input_str)
-            if input_val < min_val:
+            if min_val is not None and input_val < min_val:
                 input_line.write(f"  输入的数 {input_val} 过小 ")
-            elif input_val > max_val:
+            elif max_val is not None and input_val > max_val:
                 input_line.write(f"  输入的数 {input_val} 过大 ")
             else:
                 input_line.write(str(input_val), append=True)
@@ -515,7 +516,7 @@ if __name__ == "__main__":
         if do_option1:
             auto.max_jobs = input_validated_int("同时观看课程数: ", 5, 1, 20)
         if do_option2:
-            auto.pass_score = input_validated_int("通过考试所需分数: ", 60, 0, 100)
+            auto.pass_score = input_validated_int("通过考试所需分数: ", 60, 0, None)
         STDOUT.add_line("准备完毕", 2)
         time.sleep(1)
 
