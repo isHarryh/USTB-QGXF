@@ -18,15 +18,15 @@ from src.utils.TerminalUI import STDOUT
 
 
 class QiangGuoXianFengAPI:
-    class BadAuthorizationError(Exception):
+    class InvalidRequestError(Exception):
+        def __init__(self, *args):
+            super().__init__(args)
+
+    class PassportError(Exception):
         def __init__(self, *args):
             super().__init__(args)
 
     class UnauthorizedError(Exception):
-        def __init__(self, *args):
-            super().__init__(args)
-
-    class FatalAPIError(Exception):
         def __init__(self, *args):
             super().__init__(args)
 
@@ -60,11 +60,11 @@ class QiangGuoXianFengAPI:
                 if d["code"] == 99999:
                     return d
                 elif d["code"] == 10002:
-                    raise QiangGuoXianFengAPI.BadAuthorizationError(d.get("msg", "Authorization failed"))
+                    raise QiangGuoXianFengAPI.PassportError(d.get("msg", "Unacceptable passport"))
                 elif d["code"] == 10003:
-                    raise QiangGuoXianFengAPI.UnauthorizedError(d.get("msg", "Permission denied"))
+                    raise QiangGuoXianFengAPI.UnauthorizedError(d.get("msg", "Unauthorized request"))
                 elif d["code"] == 20000:
-                    raise QiangGuoXianFengAPI.FatalAPIError(f"API failed with code {d['code']}")
+                    raise QiangGuoXianFengAPI.InvalidRequestError(f"API failed with code {d['code']}")
                 else:
                     raise IOError(f"API failed with code {d['code']}")
             except IOError as arg:
@@ -246,14 +246,11 @@ class AutoTrainer:
                 input_line.write("  已复用此账号", 7)
                 STDOUT.add_line(f"欢迎 `{info['userName']}`!", 2)
                 return True
-        except QiangGuoXianFengAPI.BadAuthorizationError:
-            pass
-        except QiangGuoXianFengAPI.FatalAPIError:
-            pass
+        except QiangGuoXianFengAPI.InvalidRequestError:
+            display_line.write(f"未能自动登录, 服务器似乎拒绝了请求", 7)
         except QiangGuoXianFengAPI.UnauthorizedError:
-            pass
+            display_line.write(f"未能自动登录, 可能是登录状态已过期", 7)
 
-        display_line.write(f"未能自动登录, 可能是登录状态已过期", 7)
         Config.set("connection", {"baseUrl": "", "token": ""})
         Config.save_config()
         return False
@@ -275,9 +272,9 @@ class AutoTrainer:
                 captcha_code = captcha_obj.solve_challenge()
                 info = self.api.login(user_id, user_pwd, captcha["captchaId"], captcha_code)
                 break
-            except QiangGuoXianFengAPI.BadAuthorizationError as arg:
+            except QiangGuoXianFengAPI.PassportError as arg:
                 STDOUT.add_line(f"  登录失败，填写有误: {arg}", 3)
-            except QiangGuoXianFengAPI.FatalAPIError as arg:
+            except QiangGuoXianFengAPI.InvalidRequestError as arg:
                 STDOUT.add_line(f"  登录失败，意外错误：{arg}", 3)
         STDOUT.add_line(f"登录成功，欢迎 `{info['userName']}`!", 2)
 
