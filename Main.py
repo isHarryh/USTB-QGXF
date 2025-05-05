@@ -301,7 +301,6 @@ class AutoTrainer:
         )
         try:
             start = AutoTrainer._hhmmss_to_second(start_time)
-            start = 120
             total = AutoTrainer._hhmmss_to_second(total_time)
             for now in range(start, total, self._report_interval):
                 now += (random.random() - 0.5) * 2 * self._report_randomness
