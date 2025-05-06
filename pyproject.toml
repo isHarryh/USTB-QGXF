@@ -1,6 +1,6 @@
 [project]
 name = "USTB-QGXF"
-version = "2.1.1"
+version = "2.1.2"
 description = "Auto complete USTB QiangGuoXianFeng series lessons"
 authors = [
     {name = "Harry Huang", email = "harryhuang2652@qq.com"}
