@@ -34,17 +34,29 @@ class QiangGuoXianFengAPI:
         def __str__(self):
             raise ValueError("This value is undefined")
 
-    def __init__(self, base_url: str = Undefined(), timeout: int = 3):
+    DEFAULT_TIMEOUT = 15
+    DEFAULT_MAX_RETRIES = 3
+    DEFAULT_RETRY_DELAY = 1
+
+    def __init__(
+        self,
+        base_url: str = Undefined(),
+        timeout: int = DEFAULT_TIMEOUT,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        retry_delay: int = DEFAULT_RETRY_DELAY,
+    ):
         self.base_url = base_url
         self._headers = {"User-Agent": HttpUserAgent.generate_user_agent().value}
-        self._timeout = timeout
+        self._timeout = max(1, timeout)
+        self._max_retries = max(1, max_retries)
+        self._retry_delay = max(0, retry_delay)
 
     @property
     def token(self):
         return self._headers["Token"]
 
-    def _send(self, url, data=None, max_retries=1, as_json=False, use_get=False):
-        for _ in range(max(1, max_retries)):
+    def _send(self, url, data=None, no_retry=False, as_json=False, use_get=False):
+        for _ in range(max(1, self._max_retries)):
             try:
                 method = requests.get if use_get else requests.post
                 r = method(
@@ -68,7 +80,9 @@ class QiangGuoXianFengAPI:
                 else:
                     raise IOError(f"API failed with code {d['code']}")
             except IOError as arg:
-                time.sleep(self._timeout)
+                if no_retry:
+                    raise arg
+                time.sleep(self._retry_delay)
         raise RuntimeError("Max retires exceeded")
 
     def _fetch_pagination(self, url, data, page_size, max_page_num=1024, **kwargs):
@@ -90,7 +104,6 @@ class QiangGuoXianFengAPI:
     def get_captcha(self):
         d = self._send(
             f"{self.base_url}/trainingApi/v1/user/getCaptcha",
-            max_retries=3,
             use_get=True,
         )
         return d["data"]
@@ -104,6 +117,7 @@ class QiangGuoXianFengAPI:
                 "id": captcha_id,
                 "code": captcha_code,
             },
+            no_retry=True,
         )
         self._headers["Token"] = d["data"]["token"]
         return d["data"]
@@ -111,7 +125,7 @@ class QiangGuoXianFengAPI:
     def get_user_info(self, new_token=None):
         if new_token:
             self._headers["Token"] = new_token
-        d = self._send(f"{self.base_url}/trainingApi/v1/user/userInfo", max_retries=3)
+        d = self._send(f"{self.base_url}/trainingApi/v1/user/userInfo")
         return d["data"]
 
     def get_lesson_list(self):
@@ -142,7 +156,6 @@ class QiangGuoXianFengAPI:
     def set_resource_progress(self, resource_id, hhmmss):
         d = self._send(
             f"{self.base_url}/trainingApi/v1/lesson/setResourceTime",
-            max_retries=10,
             data={"resourceId": resource_id, "videoTime": hhmmss},
         )
         return None
@@ -154,7 +167,6 @@ class QiangGuoXianFengAPI:
     def get_lesson_exam_start(self, lesson_id, stage_id):
         d = self._send(
             f"{self.base_url}/trainingApi/v1/exam/startLessonExam",
-            max_retries=3,
             data={"stageId": stage_id, "lessonId": lesson_id},
         )
         return d["data"]
