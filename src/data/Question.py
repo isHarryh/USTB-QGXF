@@ -42,6 +42,7 @@ class Question:
     type: int
     answers: List[Answer]
     right_answer: Optional[str]
+    stage_id: Optional[int] = None  # Custom data
 
     def __lt__(self, other: object) -> bool:
         return isinstance(other, Answer) and self.id < other.id
@@ -70,7 +71,8 @@ class Question:
                 title=v["title"],
                 type=v["type"],
                 answers=(Answer.load_from_kv_table(v["answers"])),
-                right_answer=v["rightAnswer"],
+                right_answer=v.get("rightAnswer"),
+                stage_id=v.get("stageId"),
             )
             for k, v in table.items()
         ]
@@ -83,6 +85,7 @@ class Question:
                 "type": obj.type,
                 "answers": Answer.dump_to_kv_table(obj.answers),
                 "rightAnswer": obj.right_answer,
+                "stageId": obj.stage_id,
             }
             for obj in array
         }

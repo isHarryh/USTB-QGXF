@@ -24,6 +24,7 @@ class Config:
                     "3": {"title": "Example option 3."},
                 },
                 "rightAnswer": "1|2|3",
+                "stageId": 0,
             }
         },
         "version": 2,
