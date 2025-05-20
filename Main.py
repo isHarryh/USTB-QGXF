@@ -218,13 +218,19 @@ class AutoTrainer:
         max_jobs=5,
         pass_score=60,
         report_interval=10,
+        submit_interval=3.0,
     ):
+        assert max_jobs > 0
+        assert pass_score >= 0
+        assert report_interval >= 0
+        assert submit_interval >= 0
         self.api = api
         self.max_jobs = max_jobs
         self.pass_score = pass_score
+        self.submit_interval = submit_interval
         self._threads = []
         self._now_jobs = 0
-        self._report_interval = abs(report_interval)
+        self._report_interval = report_interval
 
     @staticmethod
     def _second_to_hhmmss(second: float):
@@ -401,16 +407,18 @@ class AutoTrainer:
                 else:
                     raise RuntimeError(f"Not supported question type: {q.type}")
         STDOUT.add_line(f"  (考卷 {report_id}) 记得答案的题目有 {len(has_right_answers)} 道", 7)
-        # Submit exam
+        time.sleep(1 + Randomness.about(self.submit_interval))
+        # Submit temp answers
         my_answers = {**guess_answers, **has_right_answers}
         saved_answers = {}
         display_line = STDOUT.add_line(f"  (考卷 {report_id}) 正在填写答案", 7)
         for j, k in enumerate(my_answers.keys()):
-            time.sleep(Randomness.about(4))
+            time.sleep(Randomness.about(self.submit_interval))
             saved_answers[k] = my_answers[k]
             self.api.set_exam_temp_answer(report_id, saved_answers)
             display_line.write(f"  (考卷 {report_id}) 正在填写答案 已填写 {j + 1} 道", 7)
-        time.sleep(Randomness.about(4))
+        time.sleep(1 + Randomness.about(self.submit_interval))
+        # Submit final answers
         score = self.api.set_exam_final_answer(report_id, saved_answers)["score"]
         STDOUT.add_line(f"  (考卷 {report_id}) 已交卷", 7)
         # Get right answers
@@ -466,10 +474,10 @@ class AutoTrainer:
             STDOUT.add_line(f"  找到了以下 {len(exams)} 个考试", 7)
             # Display every exam info
             for e in exams:
-                eid = e['examId']
+                eid = e["examId"]
                 STDOUT.add_line(f"考试 {eid} `{e['examTitle']}`", 6)
-                t_done = e['examTimes'] if isinstance(e['examTimes'], int) else '?'
-                t_total = e['totalExamTimes'] if isinstance(e['totalExamTimes'], int) else '?'
+                t_done = e["examTimes"] if isinstance(e["examTimes"], int) else "?"
+                t_total = e["totalExamTimes"] if isinstance(e["totalExamTimes"], int) else "?"
                 if not e["examEnable"]:
                     STDOUT.add_line(f"  注意，该考试可能未被启用", 3)
                 if isinstance(t_done, int) and isinstance(t_total, int):
@@ -508,23 +516,28 @@ class AutoTrainer:
         time.sleep(1)
 
 
-def input_validated_int(prompt: str, default_val: int, min_val: Optional[int], max_val: Optional[int]):
+def input_validated_number(
+    prompt: str,
+    default_val: float,
+    min_val: Optional[float],
+    max_val: Optional[float],
+):
     input_line = STDOUT.add_line(f"  {prompt}", 7)
     input_str = input()
     if input_str:
         try:
-            input_val = int(input_str)
+            input_val = float(input_str)
             if min_val is not None and input_val < min_val:
                 input_line.write(f"  输入的数 {input_val} 过小 ")
             elif max_val is not None and input_val > max_val:
                 input_line.write(f"  输入的数 {input_val} 过大 ")
             else:
                 input_line.write(str(input_val), append=True)
-                return input_val
+                return float(input_val)
         except:
             input_line.write(f"  输入非法 ")
     input_line.write(f"已设为默认值 {default_val}", append=True)
-    return default_val
+    return float(default_val)
 
 
 if __name__ == "__main__":
@@ -588,9 +601,11 @@ if __name__ == "__main__":
         # Set options
         STDOUT.add_line("请输入任务参数", 3)
         if do_option1:
-            auto.max_jobs = input_validated_int("同时观看课程数: ", 5, 1, 20)
+            auto.max_jobs = int(input_validated_number("同时观看课程数: ", 5, 1, 20))
         if do_option2:
-            auto.pass_score = input_validated_int("通过考试所需分数: ", 60, 0, None)
+            auto.pass_score = int(input_validated_number("通过测验所需分数: ", 60, 0, None))
+        if do_option2 or do_option3:
+            auto.submit_interval = input_validated_number("每题的答题间隔秒数: ", 3, 0, None)
         STDOUT.add_line("准备完毕", 2)
         time.sleep(1)
 
