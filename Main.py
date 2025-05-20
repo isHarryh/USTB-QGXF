@@ -171,6 +171,18 @@ class QiangGuoXianFengAPI:
         )
         return d["data"]
 
+    def get_formal_exam_list(self):
+        d = self._send(f"{self.base_url}/trainingApi/v1/user/examStatus")
+        return d["data"]
+
+    def get_formal_exam_info(self, exam_type):
+        d = self._send(f"{self.base_url}/trainingApi/v1/exam/examInfo", data={"examType": exam_type})
+        return d["data"]
+
+    def get_formal_exam_start(self, exam_id):
+        d = self._send(f"{self.base_url}/trainingApi/v1/exam/startExam", data={"examId": exam_id})
+        return d["data"]
+
     def set_exam_temp_answer(self, record_id, answer_dict):
         d = self._send(
             f"{self.base_url}/trainingApi/v1/exam/saveExamAnswer",
@@ -410,31 +422,91 @@ class AutoTrainer:
         Config.set("memory", Question.dump_to_kv_table(sorted(memory + question_list_with_answer, key=lambda x: x.id)))
         Config.save_config()
         STDOUT.add_line(f"  (考卷 {report_id}) 已保存参考答案", 7)
-        if score >= self.pass_score:
-            STDOUT.add_line(f"  (考卷 {report_id}) 成功通过! 分数 {score}", 2)
-            return True
-        else:
-            STDOUT.add_line(f"  (考卷 {report_id}) 未通过! 分数 {score}", 3)
-            return False
+        STDOUT.add_line(f"  (考卷 {report_id}) 分数 {score}", 3)
+        return score
 
     def do_lesson_exam_all(self, max_retries: int = 5):
         STDOUT.remove_all_lines()
-        STDOUT.add_line("正在查询课程考试列表", 5)
+        STDOUT.add_line("正在查询章节测验列表", 5)
         exams = self.api.get_lesson_exam_list()
         for e in exams:
-            STDOUT.add_line(f"(课程考试 {e['lessonId']}) 当前最高分 {e['maxScore']} `{e['lessonTitle']}`", 6)
+            STDOUT.add_line(f"章节测验 {e['lessonId']} 当前最高分 {e['maxScore']} `{e['lessonTitle']}`", 6)
             if e["maxScore"] < self.pass_score:
                 for i in range(max_retries):
                     time.sleep(random.randint(1, 2))
                     # Request to start an exam
-                    STDOUT.add_line(f"  开始课程考试 {e["lessonId"]} (尝试 #{i + 1})", 5)
+                    STDOUT.add_line(f"  开始测验 (课程 {e["lessonId"]}) 第 {i + 1} 次尝试", 5)
                     exam = self.api.get_lesson_exam_start(e["lessonId"], e["stageId"])
-                    if self.do_exam(exam):
+                    score = self.do_exam(exam)
+                    if score >= self.pass_score:
+                        STDOUT.add_line(f"  目前分数已达标!", 2)
                         break
-                STDOUT.add_line("  已跳过此课程考试, 因为达到了最大尝试次数", 3)
+                    else:
+                        STDOUT.add_line(f"  目前分数未达到要求!", 3)
+                STDOUT.add_line("  已跳过此测验，因为达到了最大尝试次数", 3)
             else:
-                STDOUT.add_line("  已跳过此课程考试, 因为分数已达标", 2)
+                STDOUT.add_line("  已跳过此测验，因为分数已达标", 2)
         STDOUT.add_line("此项任务已完成!", 2)
+        time.sleep(1)
+
+    def do_formal_exam_all(self):
+        exams = None
+        last_eid = None
+        last_score = None
+        while True:
+            # Display last exam info
+            STDOUT.remove_all_lines()
+            if last_eid is not None:
+                STDOUT.add_line(f"已完成一次考试 (得分为 {last_score})", 2)
+            # Fetch exam list
+            STDOUT.add_line("正在查询考试列表", 5)
+            if not exams:
+                exams = self.api.get_formal_exam_list()
+                if not exams:
+                    STDOUT.add_line(f"  未找到任何考试", 3)
+                    break
+            STDOUT.add_line(f"  找到了以下 {len(exams)} 个考试", 7)
+            # Display every exam info
+            for e in exams:
+                eid = e['examId']
+                STDOUT.add_line(f"考试 {eid} `{e['examTitle']}`", 6)
+                t_done = e['examTimes'] if isinstance(e['examTimes'], int) else '?'
+                t_total = e['totalExamTimes'] if isinstance(e['totalExamTimes'], int) else '?'
+                if not e["examEnable"]:
+                    STDOUT.add_line(f"  注意，该考试可能未被启用", 3)
+                if isinstance(t_done, int) and isinstance(t_total, int):
+                    if t_total - t_done <= 0:
+                        STDOUT.add_line(f"  注意，剩余的考试次数可能已用完", 3)
+                    elif t_total - t_done < 5:
+                        STDOUT.add_line(f"  注意，剩余的考试次数较少", 3)
+                    elif last_eid is not None and last_eid == eid:
+                        STDOUT.add_line(f"  上次考试分数：{last_score}", 7)
+                        STDOUT.add_line("  您可重新进行考试", 2)
+                STDOUT.add_line(f"  最高分：{e['maxScore']}", 7)
+                STDOUT.add_line(f"  考试次数：{t_done}/{t_total}", 7)
+            # Display additional info
+            STDOUT.add_line("免责声明", 3)
+            STDOUT.add_line("  使用此功能造成的不良后果需由您承担，请您慎用本功能。", 7)
+            STDOUT.add_line("  开始考试则表示您同意该免责声明。", 7)
+            # Request to start an exam
+            input_line1 = STDOUT.add_line("请选择需要进行的考试", 3)
+            input_line2 = STDOUT.add_line("  请输入考试编号，或输入 no 以退出: ", 7)
+            choose_id = input()
+            STDOUT.remove_line(input_line1)
+            STDOUT.remove_line(input_line2)
+            if choose_id.lower() == "no":
+                break
+            for e in exams:
+                eid = e["examId"]
+                if choose_id == str(eid):
+                    STDOUT.add_line(f"开始考试 (考试 {eid})", 5)
+                    exam = self.api.get_formal_exam_start(eid)
+                    exams = None
+                    last_eid = eid
+                    last_score = self.do_exam(exam)
+                    time.sleep(1)
+                    break
+        STDOUT.add_line(f"此项任务已结束！", 2)
         time.sleep(1)
 
 
@@ -495,20 +567,25 @@ if __name__ == "__main__":
         # Select tasks
         do_option1 = False
         do_option2 = False
-        while not (do_option1 or do_option2):
+        do_option3 = False
+        while not any((do_option1, do_option2, do_option3)):
             STDOUT.add_line("请选择任务类型", 3)
             option1 = STDOUT.add_line("    1: 视频课程", 7)
-            option2 = STDOUT.add_line("    2: 课程考试", 7)
+            option2 = STDOUT.add_line("    2: 章节测验", 7)
+            option3 = STDOUT.add_line("    3: 考试")
 
             input_line = STDOUT.add_line("  请输入任务序号，用空格分隔多个序号: ", 7)
             task_code = input()
             STDOUT.remove_line(input_line)
             do_option1 = "1" in task_code.split()
             do_option2 = "2" in task_code.split()
+            do_option3 = "3" in task_code.split()
             if do_option1:
                 option1.write("  > 1: 视频课程", 2)
             if do_option2:
-                option2.write("  > 2: 课程考试", 2)
+                option2.write("  > 2: 章节测验", 2)
+            if do_option3:
+                option3.write("  > 3: 考试", 2)
 
         # Set options
         STDOUT.add_line("请输入任务参数", 3)
@@ -524,6 +601,8 @@ if __name__ == "__main__":
             auto.watch_all()
         if do_option2:
             auto.do_lesson_exam_all()
+        if do_option3:
+            auto.do_formal_exam_all()
         STDOUT.add_line(f"恭喜, 所选的所有任务已完成!", 2)
         input()
     except KeyboardInterrupt as arg:
