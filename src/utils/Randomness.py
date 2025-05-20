@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2024, Harry Huang
+# @ MIT License
 import random
 from typing import Optional, Sequence, TypeVar
 
