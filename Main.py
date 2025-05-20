@@ -5,7 +5,6 @@ from typing import Optional
 
 import json
 import requests
-import random
 import threading
 import time
 
@@ -14,6 +13,7 @@ from src.data.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
 from src.data.Question import Question
 from src.utils.Captcha import QiangGuoXianFengCaptcha
 from src.utils.Cipher import rsa_encrypt
+from src.utils.Randomness import Randomness
 from src.utils.TerminalUI import STDOUT
 
 
@@ -218,7 +218,6 @@ class AutoTrainer:
         max_jobs=5,
         pass_score=60,
         report_interval=10,
-        report_randomness=1,
     ):
         self.api = api
         self.max_jobs = max_jobs
@@ -226,7 +225,6 @@ class AutoTrainer:
         self._threads = []
         self._now_jobs = 0
         self._report_interval = abs(report_interval)
-        self._report_randomness = abs(report_randomness)
 
     @staticmethod
     def _second_to_hhmmss(second: float):
@@ -326,7 +324,7 @@ class AutoTrainer:
             start = AutoTrainer._hhmmss_to_second(start_time)
             total = AutoTrainer._hhmmss_to_second(total_time)
             for now in range(start, total, self._report_interval):
-                now += (random.random() - 0.5) * 2 * self._report_randomness
+                now = Randomness.about(now)
                 now_time = AutoTrainer._second_to_hhmmss(now)
                 progress_line.write(
                     f"    (视频资源 {resource_id}) 正在观看 {now_time} / {total_time} ({now / total:.0%})",
@@ -398,7 +396,7 @@ class AutoTrainer:
             if q.id not in has_right_answers:
                 if q.type in [1, 2, 3]:
                     # Single=1, Multiple=2, TF=3
-                    guess_this = random.choices([a.id for a in q.answers], k=2 if q.type == 2 else 1)
+                    guess_this = Randomness.choose([a.id for a in q.answers], k=2 if q.type == 2 else 1)
                     guess_answers[q.id] = "|".join(map(str, guess_this))
                 else:
                     raise RuntimeError(f"Not supported question type: {q.type}")
@@ -408,11 +406,11 @@ class AutoTrainer:
         saved_answers = {}
         display_line = STDOUT.add_line(f"  (考卷 {report_id}) 正在填写答案", 7)
         for j, k in enumerate(my_answers.keys()):
-            time.sleep(random.randint(3, 5))
+            time.sleep(Randomness.about(4))
             saved_answers[k] = my_answers[k]
             self.api.set_exam_temp_answer(report_id, saved_answers)
             display_line.write(f"  (考卷 {report_id}) 正在填写答案 已填写 {j + 1} 道", 7)
-        time.sleep(random.randint(3, 5))
+        time.sleep(Randomness.about(4))
         score = self.api.set_exam_final_answer(report_id, saved_answers)["score"]
         STDOUT.add_line(f"  (考卷 {report_id}) 已交卷", 7)
         # Get right answers
@@ -433,7 +431,7 @@ class AutoTrainer:
             STDOUT.add_line(f"章节测验 {e['lessonId']} 当前最高分 {e['maxScore']} `{e['lessonTitle']}`", 6)
             if e["maxScore"] < self.pass_score:
                 for i in range(max_retries):
-                    time.sleep(random.randint(1, 2))
+                    time.sleep(Randomness.about(2))
                     # Request to start an exam
                     STDOUT.add_line(f"  开始测验 (课程 {e["lessonId"]}) 第 {i + 1} 次尝试", 5)
                     exam = self.api.get_lesson_exam_start(e["lessonId"], e["stageId"])
