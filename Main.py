@@ -428,7 +428,7 @@ class AutoTrainer:
         Config.set("memory", Question.dump_to_kv_table(sorted(memory + question_list_with_answer, key=lambda x: x.id)))
         Config.save_config()
         STDOUT.add_line(f"  (考卷 {report_id}) 已保存参考答案", 7)
-        STDOUT.add_line(f"  (考卷 {report_id}) 分数 {score}", 3)
+        STDOUT.add_line(f"  (考卷 {report_id}) 分数 {score}", 2)
         return score
 
     def do_lesson_exam_all(self, max_retries: int = 5):
@@ -476,20 +476,16 @@ class AutoTrainer:
             for e in exams:
                 eid = e["examId"]
                 STDOUT.add_line(f"考试 {eid} `{e['examTitle']}`", 6)
-                t_done = e["examTimes"] if isinstance(e["examTimes"], int) else "?"
-                t_total = e["totalExamTimes"] if isinstance(e["totalExamTimes"], int) else "?"
                 if not e["examEnable"]:
-                    STDOUT.add_line(f"  注意，该考试可能未被启用", 3)
-                if isinstance(t_done, int) and isinstance(t_total, int):
-                    if t_total - t_done <= 0:
-                        STDOUT.add_line(f"  注意，剩余的考试次数可能已用完", 3)
-                    elif t_total - t_done < 5:
-                        STDOUT.add_line(f"  注意，剩余的考试次数较少", 3)
-                    elif last_eid is not None and last_eid == eid:
-                        STDOUT.add_line(f"  上次考试分数：{last_score}", 7)
-                        STDOUT.add_line("  您可重新进行考试", 2)
-                STDOUT.add_line(f"  最高分：{e['maxScore']}", 7)
-                STDOUT.add_line(f"  考试次数：{t_done}/{t_total}", 7)
+                    STDOUT.add_line("  注意，该考试可能未被启用", 3)
+                if last_eid is not None and last_eid == eid:
+                    STDOUT.add_line(f"  上次得分：{last_score}", 7)
+                STDOUT.add_line(f"  分数统计：平均 {e['avgScore']}，最高 {e['maxScore']}", 7)
+                t_done = e["examTimes"]
+                t_total = e["totalExamTimes"]
+                t_invalid = not isinstance(t_done, int) or not isinstance(t_total, int)
+                t_line = STDOUT.add_line([("  考试次数：", 7)])
+                t_line.write([(f"{t_done} / {t_total}", 7 if t_invalid else 2 if t_done < t_total else 1)], append=True)
             # Display additional info
             STDOUT.add_line("免责声明", 3)
             STDOUT.add_line("  使用此功能造成的不良后果需由您承担，请您慎用本功能。", 7)
@@ -510,6 +506,7 @@ class AutoTrainer:
                     exams = None
                     last_eid = eid
                     last_score = self.do_exam(exam)
+                    STDOUT.add_line(f"结束考试 (考试 {eid})", 5)
                     time.sleep(1)
                     break
         STDOUT.add_line(f"此项任务已结束！", 2)
