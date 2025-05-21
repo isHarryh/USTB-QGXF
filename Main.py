@@ -69,21 +69,21 @@ class QiangGuoXianFengAPI:
                 if r.status_code != 200:
                     raise RuntimeError(f"HTTP status code {r.status_code}")
                 # Check response schema
-                d = json.loads(r.text)
-                if not isinstance(d, dict):
+                r_full = json.loads(r.text)
+                if not isinstance(r_full, dict):
                     raise RuntimeError(f"API response schema is invalid")
-                c = d.get("code")
-                if not isinstance(c, int):
+                r_code = r_full.get("code")
+                if not isinstance(r_code, int):
                     raise RuntimeError(f"API response schema is invalid")
                 # Check API response code
-                if c == 99999:
-                    return d
-                elif c == 10002:
-                    raise QiangGuoXianFengAPI.PermissionError(d.get("msg", "No permission"))
-                elif c == 10003:
-                    raise QiangGuoXianFengAPI.UnauthorizedError(d.get("msg", "Unauthorized request"))
+                if r_code == 99999:
+                    return r_full.get("data")
+                elif r_code == 10002:
+                    raise QiangGuoXianFengAPI.PermissionError(r_full.get("msg", "No permission"))
+                elif r_code == 10003:
+                    raise QiangGuoXianFengAPI.UnauthorizedError(r_full.get("msg", "Unauthorized request"))
                 else:
-                    raise QiangGuoXianFengAPI.InvalidRequestError(f"API failed with code {d['code']}")
+                    raise QiangGuoXianFengAPI.InvalidRequestError(f"API failed with code {r_code}")
             except IOError as arg:
                 if no_retry:
                     raise arg
@@ -97,8 +97,9 @@ class QiangGuoXianFengAPI:
             data["pageNum"] = page_num
             data["pageSize"] = page_size
             d = self._send(url, data, **kwargs)
-            li = d["data"]["list"]
-            if not isinstance(li, (list, tuple)):
+            assert isinstance(d, dict)
+            li = d["list"]
+            if not isinstance(li, list):
                 break
             rst.extend(li)
             if len(li) < page_size:
@@ -111,7 +112,8 @@ class QiangGuoXianFengAPI:
             f"{self.base_url}/trainingApi/v1/user/getCaptcha",
             use_get=True,
         )
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
     def login(self, user_id, user_pwd, captcha_id, captcha_code):
         d = self._send(
@@ -124,14 +126,16 @@ class QiangGuoXianFengAPI:
             },
             no_retry=True,
         )
-        self._headers["Token"] = d["data"]["token"]
-        return d["data"]
+        assert isinstance(d, dict)
+        self._headers["Token"] = d["token"]
+        return d
 
     def get_user_info(self, new_token=None):
         if new_token:
             self._headers["Token"] = new_token
         d = self._send(f"{self.base_url}/trainingApi/v1/user/userInfo")
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
     def get_lesson_list(self):
         return self._fetch_pagination(f"{self.base_url}/trainingApi/v1/lesson/myLesson", {}, 8)
@@ -149,17 +153,19 @@ class QiangGuoXianFengAPI:
             f"{self.base_url}/trainingApi/v1/lesson/lessonVideoDetail",
             data={"videoId": video_id},
         )
-        return d["data"]["resourceList"]
+        assert isinstance(d, dict) and isinstance(d["resourceList"], list)
+        return d["resourceList"]
 
     def get_resource_detail(self, resource_id):
         d = self._send(
             f"{self.base_url}/trainingApi/v1/lesson/lessonVideoResourceDetail",
             data={"resourceId": resource_id},
         )
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
     def set_resource_progress(self, resource_id, hhmmss):
-        d = self._send(
+        self._send(
             f"{self.base_url}/trainingApi/v1/lesson/setResourceTime",
             data={"resourceId": resource_id, "videoTime": hhmmss},
         )
@@ -167,29 +173,34 @@ class QiangGuoXianFengAPI:
 
     def get_lesson_exam_list(self):
         d = self._send(f"{self.base_url}/trainingApi/v1/exam/examLessonList")
-        return d["data"]
+        assert isinstance(d, list)
+        return d
 
     def get_lesson_exam_start(self, lesson_id, stage_id):
         d = self._send(
             f"{self.base_url}/trainingApi/v1/exam/startLessonExam",
             data={"stageId": stage_id, "lessonId": lesson_id},
         )
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
     def get_formal_exam_list(self):
         d = self._send(f"{self.base_url}/trainingApi/v1/user/examStatus")
-        return d["data"]
+        assert d is None or isinstance(d, list)
+        return d
 
     def get_formal_exam_info(self, exam_type):
         d = self._send(f"{self.base_url}/trainingApi/v1/exam/examInfo", data={"examType": exam_type})
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
     def get_formal_exam_start(self, exam_id):
         d = self._send(f"{self.base_url}/trainingApi/v1/exam/startExam", data={"examId": exam_id})
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
     def set_exam_temp_answer(self, record_id, answer_dict):
-        d = self._send(
+        self._send(
             f"{self.base_url}/trainingApi/v1/exam/saveExamAnswer",
             data={"recordId": record_id, "answerList": answer_dict},
             as_json=True,
@@ -202,14 +213,16 @@ class QiangGuoXianFengAPI:
             data={"recordId": record_id, "answerList": answer_dict},
             as_json=True,
         )
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
     def get_exam_report(self, record_id, right_type=-1):
         d = self._send(
             f"{self.base_url}/trainingApi/v1/exam/examRecordDetail",
             data={"recordId": record_id, "rightType": right_type},
         )
-        return d["data"]
+        assert isinstance(d, dict)
+        return d
 
 
 class AutoTrainer:
