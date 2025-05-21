@@ -22,7 +22,7 @@ class QiangGuoXianFengAPI:
         def __init__(self, *args):
             super().__init__(args)
 
-    class PassportError(Exception):
+    class PermissionError(Exception):
         def __init__(self, *args):
             super().__init__(args)
 
@@ -67,18 +67,23 @@ class QiangGuoXianFengAPI:
                     timeout=self._timeout,
                 )
                 if r.status_code != 200:
-                    raise RuntimeError(r.status_code)
+                    raise RuntimeError(f"HTTP status code {r.status_code}")
+                # Check response schema
                 d = json.loads(r.text)
-                if d["code"] == 99999:
+                if not isinstance(d, dict):
+                    raise RuntimeError(f"API response schema is invalid")
+                c = d.get("code")
+                if not isinstance(c, int):
+                    raise RuntimeError(f"API response schema is invalid")
+                # Check API response code
+                if c == 99999:
                     return d
-                elif d["code"] == 10002:
-                    raise QiangGuoXianFengAPI.PassportError(d.get("msg", "Unacceptable passport"))
-                elif d["code"] == 10003:
+                elif c == 10002:
+                    raise QiangGuoXianFengAPI.PermissionError(d.get("msg", "No permission"))
+                elif c == 10003:
                     raise QiangGuoXianFengAPI.UnauthorizedError(d.get("msg", "Unauthorized request"))
-                elif d["code"] == 20000:
-                    raise QiangGuoXianFengAPI.InvalidRequestError(f"API failed with code {d['code']}")
                 else:
-                    raise IOError(f"API failed with code {d['code']}")
+                    raise QiangGuoXianFengAPI.InvalidRequestError(f"API failed with code {d['code']}")
             except IOError as arg:
                 if no_retry:
                     raise arg
@@ -300,7 +305,7 @@ class AutoTrainer:
                 captcha_code = captcha_obj.solve_challenge()
                 info = self.api.login(user_id, user_pwd, captcha["captchaId"], captcha_code)
                 break
-            except QiangGuoXianFengAPI.PassportError as arg:
+            except QiangGuoXianFengAPI.PermissionError as arg:
                 STDOUT.add_line(f"  登录失败，填写有误: {arg}", 3)
             except QiangGuoXianFengAPI.InvalidRequestError as arg:
                 STDOUT.add_line(f"  登录失败，意外错误：{arg}", 3)
