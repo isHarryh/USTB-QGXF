@@ -83,7 +83,9 @@ class QiangGuoXianFengAPI:
                 elif r_code == 10003:
                     raise QiangGuoXianFengAPI.UnauthorizedError(r_full.get("msg", "Unauthorized request"))
                 else:
-                    raise QiangGuoXianFengAPI.InvalidRequestError(f"API failed with code {r_code}")
+                    raise QiangGuoXianFengAPI.InvalidRequestError(
+                        f"API failed with code {r_code}" + (f", {r_full.get('msg') if r_full.get('msg') else ''}")
+                    )
             except IOError as arg:
                 if no_retry:
                     raise arg
@@ -344,16 +346,16 @@ class AutoTrainer:
             start = AutoTrainer._hhmmss_to_second(start_time)
             total = AutoTrainer._hhmmss_to_second(total_time)
             for now in range(start, total, self._report_interval):
+                time.sleep(self._report_interval)
                 now = Randomness.about(now, max_value=total) if now != start else now
                 now_time = AutoTrainer._second_to_hhmmss(now)
                 progress_line.write(f"    (视频资源 {resource_id}) 正在观看 {now_time} / {total_time} ", 7)
                 progress_line.write([(f"({now / total:.0%})", 2)], append=True)
                 self.api.set_resource_progress(resource_id, AutoTrainer._second_to_hhmmss(now))
-                time.sleep(self._report_interval)
             progress_line.write(f"    (视频资源 {resource_id}) 正在结束观看", 7)
             for _ in range(AutoTrainer.FINISHING_REPORT_TIMES):
-                self.api.set_resource_progress(resource_id, total_time)
                 time.sleep(self._report_interval)
+                self.api.set_resource_progress(resource_id, total_time)
             progress_line.write(f"    (视频资源 {resource_id}) 已完成", 2)
         except BaseException as e:
             progress_line.write(f"    (视频资源 {resource_id}) 发生了意外错误 {e}", 3)
