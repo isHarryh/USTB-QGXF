@@ -5,7 +5,15 @@ import sys
 from threading import Condition, Thread
 from typing import Any, Callable, Iterable, List, Optional, overload, TextIO, Union
 
+
 ContentSequence = Iterable[Union[str, tuple[str, int]]]
+
+_ANSI = "\x1b"
+_ANSI_CLEAR = f"{_ANSI}[2J"
+_ANSI_ERASE = f"{_ANSI}[J"
+_ANSI_HOME = f"{_ANSI}[H"
+_ANSI_NOCOLOR = f"{_ANSI}[0m"
+_ANSI_RESET = f"{_ANSI}c"
 
 
 class ObservableLine:
@@ -27,7 +35,7 @@ class ObservableLine:
                 full += item
             elif isinstance(item, Iterable):
                 text, color = item
-                full += f"\x1b[{30 + color}m{text}\x1b[0m"
+                full += f"{_ANSI}[{30 + color}m{text}{_ANSI_NOCOLOR}"
             else:
                 raise TypeError("Each content must be str or tuple")
 
@@ -83,7 +91,7 @@ class TerminalUI:
         self._thread = Thread(target=self._loop, name="TerminalUI", daemon=True)
         self._thread.start()
 
-        self._clear()
+        self._request_print()
 
     @overload
     def add_line(self) -> ObservableLine: ...
@@ -122,7 +130,6 @@ class TerminalUI:
         """Removes all lines in TUI."""
         with self._condition:
             self.lines.clear()
-            self._clear()
             self._request_print()
 
     def dispose(self):
@@ -131,11 +138,6 @@ class TerminalUI:
         with self._condition:
             self._condition.notify_all()
         self._thread.join()
-
-    def _clear(self, with_reset: bool = True):
-        with self._condition:
-            self.target.write("\x1bc\x1b[2J\x1b[H" if with_reset else "\x1b[2J\x1b[H")
-            self.target.flush()
 
     def _loop(self):
         while self._running:
@@ -154,9 +156,9 @@ class TerminalUI:
             for idx, line in enumerate(self.lines):
                 line_str = line.read()
                 output_lines.append(line_str)
-            full = f"\x1b[H{'\n'.join(output_lines)}\x1b[J"
+            full = "\n".join(output_lines)
+            full = f"{_ANSI_RESET}{_ANSI_CLEAR}{_ANSI_HOME}{full}{_ANSI_ERASE}"
 
-            self._clear()
             self.target.write(full)
             self.target.flush()
 
