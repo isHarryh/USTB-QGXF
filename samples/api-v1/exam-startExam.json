@@ -1,0 +1,70 @@
+{
+    "code": 99999,
+    "data": {
+        "recordId": 123,
+        "appId": 2,
+        "userSid": "U20***",
+        "userId": 123,
+        "lessonId": 0,
+        "stageId": 123,
+        "examScore": 0,
+        "examPass": 0,
+        "examStartDate": "2025-**-**T**:**:**.*********+08:00",
+        "examEndDate": "0001-01-01T00:00:00Z",
+        "examIp": "*.*.*.*",
+        "statistics": "",
+        "paperInfo": "{\"paper_id\":123,\"paper_title\":\"***试卷\",\"question_list\":[123,456,789],\"paper_items\":{\"lesson_rates\":[{\"lesson_list\":[123,456,789],\"rate\":100}],\"paper_single_number\":25,\"paper_single_score\":1,\"paper_multiple_number\":50,\"paper_multiple_score\":1,\"paper_judge_number\":25,\"paper_judge_score\":1,\"paper_summary_number\":0,\"paper_summary_score\":1,\"paper_essay_number\":0,\"paper_essay_score\":10,\"paper_easy_number\":100,\"paper_medium_number\":0,\"paper_hard_number\":0,\"total_questions\":100,\"essay_question_ids\":null,\"essay_question_names\":null}}",
+        "createDate": "2025-**-**T**:**:**.*********+08:00",
+        "state": 0,
+        "answerRecord": "",
+        "markRecord": "",
+        "resultRecord": "",
+        "examType": 2,
+        "ticketCode": "",
+        "shortAnswerScore": "",
+        "shortAnswerTeacherId": 0,
+        "examPassType": 0,
+        "examId": 123,
+        "hasEssay": 0,
+        "isCheated": 0,
+        "cheatedWay": "",
+        "shortTime": "0001-01-01T00:00:00Z",
+        "endSecond": 3600,
+        "examTitle": "***结业考试",
+        "questionList": [
+            {
+                "questionId": 123,
+                "lessonId": 123,
+                "questionTitle": "***",
+                "questionType": 1,
+                "questionLevel": 2,
+                "kId": "123",
+                "state": 1,
+                "createDate": "2022-**-**T**:**:**+08:00",
+                "questionPriority": 0,
+                "pubId": 123,
+                "updateTime": "2023-**-**T**:**:**+08:00",
+                "knowledge": "***",
+                "answerList": [
+                    {
+                        "answerId": 123,
+                        "answerTitle": "***",
+                        "answerIsTrue": 0,
+                        "questionId": 123,
+                        "answerExplain": "",
+                        "createTime": "2023-**-**T**:**:**+08:00",
+                        "updateTime": "2023-**-**T**:**:**+08:00",
+                        "pubId": 123,
+                        "deleted": 0
+                    }
+                ]
+            }
+        ],
+        "answerList": {
+            "123": "123"
+        },
+        "questionMark": null,
+        "enableSwitch": 0
+    },
+    "msg": "ok"
+}

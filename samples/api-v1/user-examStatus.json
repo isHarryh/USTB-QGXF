@@ -1,0 +1,20 @@
+{
+    "code": 99999,
+    "data": [
+        {
+            "examId": 123,
+            "examTitle": "结业考试",
+            "paperId": 123,
+            "examType": 1,
+            "examState": 2,
+            "totalExamTimes": 50,
+            "examTimes": 1,
+            "maxScore": 60,
+            "avgScore": 60,
+            "examTime": "2025-**-** **:**:**",
+            "examBrief": "",
+            "examEnable": 1
+        }
+    ],
+    "msg": "ok"
+}
