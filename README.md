@@ -1,7 +1,7 @@
 USTB-QGXF
 ==========
 Auto complete USTB QiangGuoXianFeng series lessons  
-北京科技大学强国先锋系列课程自动代理（国防教育/DXPX）**` v2.2 `**
+北京科技大学强国先锋系列课程自动代理（国防教育/DXPX）**` v2.3 `**
 
 <sup> This project only supports Chinese docs. If you are an English user, feel free to contact us. </sup>
 
@@ -32,9 +32,11 @@ Auto complete USTB QiangGuoXianFeng series lessons
 
 ### 功能性更新日志
 
-- `v2.2` 新增了对考试的全面支持。
-- `v2.1` 新增了基于配置文件的记忆，支持持久化保存题库；新增了全新的终端界面，提供更好的交互体验。
-- `v2.0` 新增了对 DXPX 平台的支持。
+- `v2.3` 新增了对填空题的支持；优化了考试的交互体验。
+- `v2.2` 新增了对考试的全面支持（先前版本只支持章节测验）。
+- `v2.1` 实现了基于配置文件的记忆，支持持久化保存题库；新增了全新的终端界面，提供更好的交互体验。
+- `v2.0` 新增了对 DXPX 平台的支持（先前版本只支持国防教育平台）。
+- `v1.0` 实现了视频课程和章节测验的自动完成功能。
 
 ## 使用方法 <sub>Usage</sub>
 
