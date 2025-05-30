@@ -305,25 +305,34 @@ class AutoTrainer:
     def manual_login(self):
         while True:
             try:
+                # Get account
                 STDOUT.add_line("请登录", 3)
                 input_line = STDOUT.add_line("  请输入账号: ", 7)
                 user_id = input()
                 input_line.write(f"  已选择账号: {user_id}", 7)
+                # Get password
                 input_line = STDOUT.add_line("  请输入密码: ", 7)
                 user_pwd = input()
                 STDOUT.remove_line(input_line)
+                # Get captcha
                 captcha_line = STDOUT.add_line("  正在获取验证码", 5)
                 captcha = self.api.get_captcha()
-                captcha_line.write("  请在弹出的窗口中查看验证码图片，然后关闭该窗口", 6)
+                captcha_line.write("  请在弹出的窗口中查看验证码图片", 6)
+                input_line = STDOUT.add_line("  然后，请关闭图片窗口...", 7)
                 captcha_obj = QiangGuoXianFengCaptcha(captcha["base64Str"])
+                captcha_obj.show_image()
+                input_line.write("  请输入验证码: ", 7)
                 captcha_code = captcha_obj.solve_challenge()
+                STDOUT.remove_line(captcha_line)
+                # Login
+                input_line.write("正在尝试登录", 5)
                 info = self.api.login(user_id, user_pwd, captcha["captchaId"], captcha_code)
                 break
             except QiangGuoXianFengAPI.PermissionError as arg:
                 STDOUT.add_line(f"  登录失败，填写有误: {arg}", 3)
             except QiangGuoXianFengAPI.InvalidRequestError as arg:
                 STDOUT.add_line(f"  登录失败，意外错误：{arg}", 3)
-        STDOUT.add_line(f"登录成功，欢迎 `{info['userName']}`!", 2)
+        STDOUT.add_line(f"  登录成功，欢迎 `{info['userName']}`!", 2)
 
         STDOUT.add_line("请确认", 3)
         STDOUT.add_line(f"您想要记住登录状态以便下次使用吗？", 7)
