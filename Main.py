@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2024, Harry Huang
 # @ MIT License
-from typing import Optional
+from typing import Optional, TypeVar, Union
 
 import json
 import requests
@@ -545,28 +545,32 @@ class AutoTrainer:
         time.sleep(1)
 
 
+_T = TypeVar("_T", bound=Union[int, float])
+
+
 def input_validated_number(
     prompt: str,
-    default_val: float,
-    min_val: Optional[float],
-    max_val: Optional[float],
-):
+    input_type: type[_T],
+    default_val: _T,
+    min_val: Optional[_T] = None,
+    max_val: Optional[_T] = None,
+) -> _T:
     input_line = STDOUT.add_line(f"  {prompt}", 7)
     input_str = input()
     if input_str:
         try:
-            input_val = float(input_str)
+            input_val = input_type(input_str)
             if min_val is not None and input_val < min_val:
                 input_line.write(f"  输入的数 {input_val} 过小 ")
             elif max_val is not None and input_val > max_val:
                 input_line.write(f"  输入的数 {input_val} 过大 ")
             else:
                 input_line.write(str(input_val), append=True)
-                return float(input_val)
+                return input_type(input_val)
         except:
             input_line.write(f"  输入非法 ")
     input_line.write(f"已设为默认值 {default_val}", append=True)
-    return float(default_val)
+    return input_type(default_val)
 
 
 if __name__ == "__main__":
@@ -584,8 +588,11 @@ if __name__ == "__main__":
                 STDOUT.add_line("请选择目标平台", 3)
                 site_map_lines = {
                     site: STDOUT.add_line(
-                        f"    平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
-                        7,
+                        [
+                            (f"    平台代码 ", 7),
+                            (site, 6),
+                            (f": 网址 {QiangGuoXianFengBaseURL.of_name(site).value}", 7),
+                        ]
                     )
                     for site in QiangGuoXianFengBaseURL.all_names()
                 }
@@ -595,8 +602,11 @@ if __name__ == "__main__":
                 for site in site_map_lines:
                     if site == site_code.upper():
                         site_map_lines[site].write(
-                            f"  > 平台代码 {site}：网址 {QiangGuoXianFengBaseURL.of_name(site).value}",
-                            2,
+                            [
+                                (f"  > 平台代码 ", 2),
+                                (site, 6),
+                                (f": 网址 {QiangGuoXianFengBaseURL.of_name(site).value}", 2),
+                            ]
                         )
                         base_url = QiangGuoXianFengBaseURL.of_name(site_code).value
                         break
@@ -630,11 +640,11 @@ if __name__ == "__main__":
         # Set options
         STDOUT.add_line("请输入任务参数", 3)
         if do_option1:
-            auto.max_jobs = int(input_validated_number("同时观看课程数: ", 5, 1, 20))
+            auto.max_jobs = input_validated_number("同时观看课程数: ", int, 5, min_val=1, max_val=20)
         if do_option2:
-            auto.pass_score = int(input_validated_number("通过测验所需分数: ", 60, 0, None))
+            auto.pass_score = input_validated_number("通过测验所需分数: ", int, 60, min_val=0)
         if do_option2 or do_option3:
-            auto.submit_interval = input_validated_number("每题的答题间隔秒数: ", 3, 0, None)
+            auto.submit_interval = input_validated_number("每题的答题间隔秒数: ", float, 3.0, min_val=0.0)
         STDOUT.add_line("准备完毕", 2)
         time.sleep(1)
 
