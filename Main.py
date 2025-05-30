@@ -403,10 +403,21 @@ class AutoTrainer:
         report_id = exam_obj["recordId"]
         stage_id = exam_obj["stageId"]
         question_list = sorted(map(Question.load_from_web_data, exam_obj["questionList"]))
+        STDOUT.add_line(f"  (考卷 {report_id}) 一共有题目 {len(question_list)} 道", 7)
+        question_type_map = Question.cluster(question_list, lambda q: q.type)
+        question_type_l10n = {
+            int(QuestionType.SINGLE_CHOICE): "单选",
+            int(QuestionType.MULTIPLE_CHOICE): "多选",
+            int(QuestionType.JUDGE): "判断",
+            int(QuestionType.FILL_BLANK): "填空",
+        }
+        question_type_stats = [
+            f"{question_type_l10n.get(x, '未知')} {len(question_type_map.get(x, []))}" for x in question_type_map
+        ]
+        STDOUT.add_line(f"  (考卷 {report_id}) 题型分布: {', '.join(question_type_stats)}", 7)
         # Figure out answers
         has_right_answers = {}
         guess_answers = {}
-        STDOUT.add_line(f"  (考卷 {report_id}) 一共有题目 {len(question_list)} 道", 7)
         memory = Question.load_from_kv_table(Config.get("memory"))
         for q in question_list:
             # Extract right answer from memory
