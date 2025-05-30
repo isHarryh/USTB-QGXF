@@ -2,8 +2,16 @@
 # Copyright (c) 2024, Harry Huang
 # @ MIT License
 from dataclasses import dataclass
+from enum import IntEnum
 from functools import total_ordering
 from typing import Any, Dict, List, Optional
+
+
+class QuestionType(IntEnum):
+    SINGLE_CHOICE = 1
+    MULTIPLE_CHOICE = 2
+    JUDGE = 3
+    FILL_BLANK = 4
 
 
 @dataclass

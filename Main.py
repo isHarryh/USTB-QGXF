@@ -10,7 +10,7 @@ import time
 
 from src.data.Config import Config
 from src.data.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
-from src.data.Question import Question
+from src.data.Question import Question, QuestionType
 from src.utils.Captcha import QiangGuoXianFengCaptcha
 from src.utils.Cipher import rsa_encrypt
 from src.utils.Randomness import Randomness
@@ -420,17 +420,24 @@ class AutoTrainer:
         STDOUT.add_line(f"  (考卷 {report_id}) 一共有题目 {len(question_list)} 道", 7)
         memory = Question.load_from_kv_table(Config.get("memory"))
         for q in question_list:
+            # Extract right answer from memory
             for m in memory:
                 if m.id == q.id:
-                    has_right_answers[q.id] = m.right_answer
+                    if q.type == QuestionType.FILL_BLANK and m.right_answer:
+                        has_right_answers[q.id] = m.right_answer.split("|")[0]
+                    else:
+                        has_right_answers[q.id] = m.right_answer
                     break
-            if q.id not in has_right_answers:
-                if q.type in [1, 2, 3]:
-                    # Single=1, Multiple=2, TF=3
-                    guess_this = Randomness.choose([a.id for a in q.answers], k=2 if q.type == 2 else 1)
-                    guess_answers[q.id] = "|".join(map(str, guess_this))
+            # Guess random answer if question not found in memory
+            if q.id not in has_right_answers and q.answers:
+                if q.type == QuestionType.SINGLE_CHOICE or q.type == QuestionType.JUDGE:
+                    guess_answers[q.id] = "|".join(Randomness.choose([str(a.id) for a in q.answers], k=1))
+                elif q.type in [QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE]:
+                    guess_answers[q.id] = "|".join(Randomness.choose([str(a.id) for a in q.answers], k=2))
+                elif q.type == QuestionType.FILL_BLANK:
+                    guess_answers[q.id] = " "
                 else:
-                    raise RuntimeError(f"Not supported question type: {q.type}")
+                    raise ValueError(f"Not supported question type: {q.type}")
         STDOUT.add_line(f"  (考卷 {report_id}) 记得答案的题目有 {len(has_right_answers)} 道", 7)
         time.sleep(1 + Randomness.about(self.submit_interval))
         # Submit temp answers
