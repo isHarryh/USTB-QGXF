@@ -444,12 +444,19 @@ class AutoTrainer:
         my_answers = {**guess_answers, **has_right_answers}
         saved_answers = {}
         display_line = STDOUT.add_line(f"  (考卷 {report_id}) 正在填写答案", 7)
-        for j, k in enumerate(my_answers.keys()):
+        for j, q in enumerate(question_list):
             time.sleep(Randomness.about(self.submit_interval))
-            saved_answers[k] = my_answers[k]
+            saved_answers[q.id] = my_answers[q.id]
             self.api.set_exam_temp_answer(report_id, saved_answers)
-            display_line.write(f"  (考卷 {report_id}) 正在填写答案 已填写 {j + 1} 道", 7)
+            display_line.write(
+                [
+                    (f"  (考卷 {report_id}) 正在填写答案 已填写 {j + 1} 道\n", 7),
+                    (f"    (题目 {q.id}) 题干预览:\n", 6),
+                    (q.summary(indent=6), 7),
+                ]
+            )
         time.sleep(1 + Randomness.about(self.submit_interval))
+        STDOUT.remove_line(display_line)
         # Submit final answers
         score = self.api.set_exam_final_answer(report_id, saved_answers)["score"]
         STDOUT.add_line(f"  (考卷 {report_id}) 已交卷", 7)

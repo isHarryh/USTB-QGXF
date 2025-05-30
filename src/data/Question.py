@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import total_ordering
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 
 class QuestionType(IntEnum):
@@ -42,6 +42,9 @@ class Answer:
         return {str(obj.id): {"title": obj.title} for obj in array}
 
 
+_K = TypeVar("_K")
+
+
 @dataclass
 @total_ordering
 class Question:
@@ -60,6 +63,40 @@ class Question:
 
     def __hash__(self) -> int:
         return hash(self.id)
+
+    def summary(self, indent: int = 0, max_title_len: int = 40, max_answer_len: int = 10) -> str:
+        if indent < 0:
+            raise ValueError("indent must be non-negative")
+        if max_title_len < 4 or max_answer_len < 4:
+            raise ValueError("max_title_len and max_answer_len must be at least 4")
+
+        def slim_text(text: str, max_len: int):
+            if len(text) > max_len:
+                half = (max_len - 2) // 2
+                return text[:half] + " ... " + text[-half:]
+            return text
+
+        title = slim_text(self.title.replace("&nbsp;", " "), max_title_len)
+
+        if self.type in [QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE, QuestionType.JUDGE]:
+            answer_parts = []
+            for i, answer in enumerate(sorted(self.answers)):
+                label = chr(65 + i)  # A, B, C...
+                answer_text = slim_text(answer.title, max_answer_len)
+                answer_parts.append(f"{label}.{answer_text}")
+            return f"{' ' * indent}{title}\n{' ' * indent}{' '.join(answer_parts)}"
+        else:
+            return f"{' ' * indent}title"
+
+    @staticmethod
+    def cluster(questions: List["Question"], key: Callable[["Question"], _K]) -> Dict[_K, List["Question"]]:
+        result = {}
+        for q in questions:
+            k = key(q)
+            if k not in result:
+                result[k] = []
+            result[k].append(q)
+        return result
 
     @staticmethod
     def load_from_web_data(data: Dict[str, Any]) -> "Question":
