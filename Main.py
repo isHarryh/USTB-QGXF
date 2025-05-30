@@ -8,6 +8,7 @@ import requests
 import threading
 import time
 
+from src.Exceptions import InvalidRequestError, PermissionError, UnauthorizedError
 from src.data.Config import Config
 from src.data.Enums import HttpUserAgent, QiangGuoXianFengBaseURL
 from src.data.Question import Question, QuestionType
@@ -18,18 +19,6 @@ from src.utils.TerminalUI import STDOUT
 
 
 class QiangGuoXianFengAPI:
-    class InvalidRequestError(Exception):
-        def __init__(self, *args):
-            super().__init__(args)
-
-    class PermissionError(Exception):
-        def __init__(self, *args):
-            super().__init__(args)
-
-    class UnauthorizedError(Exception):
-        def __init__(self, *args):
-            super().__init__(args)
-
     class Undefined(str):
         def __str__(self):
             raise ValueError("This value is undefined")
@@ -79,11 +68,11 @@ class QiangGuoXianFengAPI:
                 if r_code == 99999:
                     return r_full.get("data")
                 elif r_code == 10002:
-                    raise QiangGuoXianFengAPI.PermissionError(r_full.get("msg", "No permission"))
+                    raise PermissionError(r_full.get("msg", "No permission"))
                 elif r_code == 10003:
-                    raise QiangGuoXianFengAPI.UnauthorizedError(r_full.get("msg", "Unauthorized request"))
+                    raise UnauthorizedError(r_full.get("msg", "Unauthorized request"))
                 else:
-                    raise QiangGuoXianFengAPI.InvalidRequestError(
+                    raise InvalidRequestError(
                         f"API failed with code {r_code}" + (f", {r_full.get('msg') if r_full.get('msg') else ''}")
                     )
             except IOError as arg:
@@ -293,9 +282,9 @@ class AutoTrainer:
                 input_line.write("  已复用此账号", 7)
                 STDOUT.add_line(f"欢迎 `{info['userName']}`!", 2)
                 return True
-        except QiangGuoXianFengAPI.InvalidRequestError:
+        except InvalidRequestError:
             display_line.write(f"未能自动登录, 服务器似乎拒绝了请求", 7)
-        except QiangGuoXianFengAPI.UnauthorizedError:
+        except UnauthorizedError:
             display_line.write(f"未能自动登录, 可能是登录状态已过期", 7)
 
         Config.set("connection", {"baseUrl": "", "token": ""})
@@ -328,9 +317,9 @@ class AutoTrainer:
                 input_line.write("正在尝试登录", 5)
                 info = self.api.login(user_id, user_pwd, captcha["captchaId"], captcha_code)
                 break
-            except QiangGuoXianFengAPI.PermissionError as arg:
+            except PermissionError as arg:
                 STDOUT.add_line(f"  登录失败，填写有误: {arg}", 3)
-            except QiangGuoXianFengAPI.InvalidRequestError as arg:
+            except InvalidRequestError as arg:
                 STDOUT.add_line(f"  登录失败，意外错误：{arg}", 3)
         STDOUT.add_line(f"  登录成功，欢迎 `{info['userName']}`!", 2)
 
