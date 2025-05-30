@@ -430,14 +430,7 @@ class AutoTrainer:
                     break
             # Guess random answer if question not found in memory
             if q.id not in has_right_answers and q.answers:
-                if q.type == QuestionType.SINGLE_CHOICE or q.type == QuestionType.JUDGE:
-                    guess_answers[q.id] = "|".join(Randomness.choose([str(a.id) for a in q.answers], k=1))
-                elif q.type in [QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE]:
-                    guess_answers[q.id] = "|".join(Randomness.choose([str(a.id) for a in q.answers], k=2))
-                elif q.type == QuestionType.FILL_BLANK:
-                    guess_answers[q.id] = " "
-                else:
-                    raise ValueError(f"Not supported question type: {q.type}")
+                guess_answers[q.id] = q.random_answer()
         STDOUT.add_line(f"  (考卷 {report_id}) 记得答案的题目有 {len(has_right_answers)} 道", 7)
         time.sleep(1 + Randomness.about(self.submit_interval))
         # Submit temp answers

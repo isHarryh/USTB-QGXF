@@ -6,6 +6,8 @@ from enum import IntEnum
 from functools import total_ordering
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
+from ..utils.Randomness import Randomness
+
 
 class QuestionType(IntEnum):
     SINGLE_CHOICE = 1
@@ -86,7 +88,18 @@ class Question:
                 answer_parts.append(f"{label}.{answer_text}")
             return f"{' ' * indent}{title}\n{' ' * indent}{' '.join(answer_parts)}"
         else:
-            return f"{' ' * indent}title"
+            return f"{' ' * indent}{title}"
+
+    def random_answer(self, multiple_choice_k: int = 2, fill_blank_default: str = " ") -> str:
+        if self.type in [QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE, QuestionType.JUDGE]:
+            k = min(len(self.answers), multiple_choice_k if self.type == QuestionType.MULTIPLE_CHOICE else 1)
+            if k < 1:
+                raise ValueError("No enough choice to select")
+            return "|".join(Randomness.choose([str(a.id) for a in self.answers], k=k))
+        elif self.type == QuestionType.FILL_BLANK:
+            return fill_blank_default
+        else:
+            raise ValueError(f"Not supported question type: {self.type}")
 
     @staticmethod
     def cluster(questions: List["Question"], key: Callable[["Question"], _K]) -> Dict[_K, List["Question"]]:
