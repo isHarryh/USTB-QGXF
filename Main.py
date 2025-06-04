@@ -175,7 +175,7 @@ class QiangGuoXianFengAPI:
         assert isinstance(d, dict)
         return d
 
-    def get_formal_exam_list(self):
+    def get_formal_exam_list(self):  # Not reliable
         d = self._send(f"{self.base_url}/trainingApi/v1/user/examStatus")
         assert d is None or isinstance(d, list)
         return d
@@ -491,6 +491,7 @@ class AutoTrainer:
         exams = None
         last_eid = None
         last_score = None
+        last_update = None
         while True:
             # Display last exam info
             STDOUT.remove_all_lines()
@@ -498,8 +499,11 @@ class AutoTrainer:
                 STDOUT.add_line(f"已完成一次考试 (得分为 {last_score})", 2)
             # Fetch exam list
             STDOUT.add_line("正在查询考试列表", 5)
-            if not exams:
-                exams = self.api.get_formal_exam_list()
+            if not exams or not last_update or time.time() - last_update > 1:
+                exams = list(
+                    filter(lambda e: isinstance(e, dict), [self.api.get_formal_exam_info(exam_type=i) for i in [0, 1]])
+                )
+                last_update = time.time()
                 if not exams:
                     STDOUT.add_line(f"  未找到任何考试", 3)
                     break
@@ -508,16 +512,19 @@ class AutoTrainer:
             for e in exams:
                 eid = e["examId"]
                 STDOUT.add_line(f"考试 {eid} `{e['examTitle']}`", 6)
-                if not e["examEnable"]:
-                    STDOUT.add_line("  注意，该考试可能未被启用", 3)
+                if not e["buttonStatus"]:
+                    STDOUT.add_line("  注意，可能无法进行此考试", 3)
                 if last_eid is not None and last_eid == eid:
                     STDOUT.add_line(f"  上次得分：{last_score}", 7)
                 STDOUT.add_line(f"  分数统计：平均 {e['avgScore']}，最高 {e['maxScore']}", 7)
                 t_done = e["examTimes"]
-                t_total = e["totalExamTimes"]
-                t_invalid = not isinstance(t_done, int) or not isinstance(t_total, int)
+                t_remaining = e["totalExamTimes"]
+                t_invalid = not isinstance(t_done, int) or not isinstance(t_remaining, int)
                 t_line = STDOUT.add_line([("  考试次数：", 7)])
-                t_line.write([(f"{t_done} / {t_total}", 7 if t_invalid else 2 if t_done < t_total else 1)], append=True)
+                t_line.write(
+                    [(f"已用 {t_done}，剩余 {t_remaining}", 7 if t_invalid else 2 if t_remaining > 0 else 1)],
+                    append=True,
+                )
             # Display additional info
             STDOUT.add_line("免责声明", 3)
             STDOUT.add_line("  使用此功能造成的不良后果需由您承担，请您慎用本功能。", 7)
@@ -535,7 +542,6 @@ class AutoTrainer:
                 if choose_id == str(eid):
                     STDOUT.add_line(f"开始考试 (考试 {eid})", 5)
                     exam = self.api.get_formal_exam_start(eid)
-                    exams = None
                     last_eid = eid
                     last_score = self.do_exam(exam)
                     STDOUT.add_line(f"结束考试 (考试 {eid})", 5)
